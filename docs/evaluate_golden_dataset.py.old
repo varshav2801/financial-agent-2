@@ -1,0 +1,643 @@
+#!/usr/bin/env python3
+"""
+Evaluation script for golden dataset across multiple models.
+Tests gpt-4o, gpt-4o-mini, o3-mini, and claude-3.5-sonnet on balanced test cases.
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+from datetime import datetime
+import argparse
+from typing import Dict, List, Any
+import asyncio
+import time
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+from src.utils.data_loader import load_record
+from src.agent.workflow_planner import WorkflowPlanner
+from src.agent.workflow_executor import WorkflowExecutor
+from src.agent.workflow_validator import WorkflowValidator
+from src.services.llm_client import get_llm_client
+from src.evaluation.tracker import MetricsTracker
+from src.models.dataset import Document
+
+console = Console()
+
+
+class GoldenDatasetEvaluator:
+    """Evaluator for golden dataset across multiple models."""
+    
+    def __init__(self, golden_dataset_path: str, output_dir: str):
+        self.golden_dataset_path = golden_dataset_path
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Load golden dataset
+        with open(golden_dataset_path, 'r') as f:
+            self.golden_data = json.load(f)
+        
+        self.examples = self.golden_data['examples']
+        console.print(f"[green]Loaded {len(self.examples)} examples from golden dataset[/green]")
+    
+    async def evaluate_single_turn(
+        self,
+        planner: WorkflowPlanner,
+        executor: WorkflowExecutor,
+        tracker: MetricsTracker,
+        question: str,
+        document: Document,
+        previous_answers: Dict,
+        expected_answer: Any,
+        turn_idx: int
+    ) -> Dict[str, Any]:
+        """Evaluate a single dialogue turn with comprehensive metrics."""
+        start_time = time.time()
+        
+        try:
+            # Start turn tracking
+            tracker.start_turn(turn_idx, question, expected_answer, ground_truth_program=None)
+            
+            plan_start = time.time()
+            
+            # Generate plan (tracker passed to planner)
+            plan = await planner.create_plan(
+                question=question,
+                document=document,
+                previous_answers=previous_answers
+            )
+            plan_time = (time.time() - plan_start) * 1000
+            
+            # Log plan for tracking
+            tracker.log_plan(
+                num_steps=len(plan.steps),
+                complexity=0.0,
+                plan_type="workflow",
+                plan_object=plan
+            )
+            
+            # Execute plan (tracker passed to executor)
+            exec_start = time.time()
+            result = await executor.execute(
+                plan=plan,
+                document=document,
+                previous_answers=previous_answers,
+                current_question=question
+            )
+            exec_time = (time.time() - exec_start) * 1000
+            
+            answer_value = result.final_value if result.success else None
+            
+            # Finalize turn to calculate accuracies
+            tracker.finalize_turn(answer_value)
+            
+            execution_time = (time.time() - start_time) * 1000
+            
+            # Get accuracy metrics from tracker's current turn
+            current_turn = tracker.current_turn
+            
+            return {
+                'success': result.success,
+                'answer': answer_value,
+                'expected': expected_answer,
+                'correct': current_turn.financial_match if current_turn else False,
+                'numerical_match': current_turn.numerical_match if current_turn else False,
+                'financial_match': current_turn.financial_match if current_turn else False,
+                'soft_match': current_turn.soft_match if current_turn else False,
+                'execution_time_ms': execution_time,
+                'plan_time_ms': plan_time,
+                'exec_time_ms': exec_time,
+                'tokens': {
+                    'prompt_tokens': current_turn.prompt_tokens if current_turn else 0,
+                    'completion_tokens': current_turn.completion_tokens if current_turn else 0,
+                    'total_tokens': current_turn.turn_tokens if current_turn else 0
+                },
+                'plan': plan.model_dump() if plan else None,
+                'result': {
+                    'step_results': result.step_results if result else {},
+                    'error': result.error if result else None
+                }
+            }
+            
+        except Exception as e:
+            # Log error in tracker
+            error_context = {
+                "turn_idx": turn_idx,
+                "question": question
+            }
+            tracker.log_error(type(e).__name__, str(e), error_context)
+            tracker.finalize_turn(None)
+            
+            return {
+                'success': False,
+                'error': str(e),
+                'execution_time_ms': (time.time() - start_time) * 1000,
+                'tokens': {
+                    'prompt_tokens': 0,
+                    'completion_tokens': 0,
+                    'total_tokens': 0
+                }
+            }
+    
+    async def evaluate_example(
+        self,
+        example: Dict,
+        model_name: str
+    ) -> Dict[str, Any]:
+        """Evaluate a single example (multi-turn conversation) with comprehensive metrics."""
+        
+        # Set model in environment
+        os.environ['MODEL_NAME'] = model_name
+        
+        # Initialize components with tracker
+        llm_client = get_llm_client()
+        tracker = MetricsTracker()
+        planner = WorkflowPlanner(llm_client, tracker=tracker)
+        executor = WorkflowExecutor(tracker=tracker)
+        
+        # Load record data
+        record_id = example['id']
+        questions = example['dialogue']['conv_questions']
+        expected_answers = example['dialogue']['conv_answers']
+        executed_answers = example['dialogue']['executed_answers']
+        
+        # Convert document dict to Document object
+        doc_dict = example['doc']
+        document = Document(
+            pre_text=doc_dict.get('pre_text', ''),
+            post_text=doc_dict.get('post_text', ''),
+            table=doc_dict.get('table', {})
+        )
+        
+        previous_answers = {}
+        turn_results = []
+        
+        # Track different accuracy types
+        numerical_correct = 0
+        financial_correct = 0
+        soft_match_correct = 0
+        
+        # Track tokens and timing
+        total_tokens = 0
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_response_time_ms = 0
+        
+        for turn_idx, question in enumerate(questions):
+            expected = expected_answers[turn_idx]
+            
+            turn_result = await self.evaluate_single_turn(
+                planner=planner,
+                executor=executor,
+                tracker=tracker,
+                question=question,
+                document=document,
+                previous_answers=previous_answers,
+                expected_answer=expected,
+                turn_idx=turn_idx
+            )
+            
+            turn_result['turn'] = turn_idx + 1
+            turn_result['question'] = question
+            turn_results.append(turn_result)
+            
+            # Count correct by accuracy type
+            if turn_result.get('success'):
+                if turn_result.get('numerical_match'):
+                    numerical_correct += 1
+                if turn_result.get('financial_match'):
+                    financial_correct += 1
+                if turn_result.get('soft_match'):
+                    soft_match_correct += 1
+                
+                # Aggregate tokens
+                tokens = turn_result.get('tokens', {})
+                total_prompt_tokens += tokens.get('prompt_tokens', 0)
+                total_completion_tokens += tokens.get('completion_tokens', 0)
+                total_tokens += tokens.get('total_tokens', 0)
+                
+                # Aggregate timing
+                total_response_time_ms += turn_result.get('execution_time_ms', 0)
+            
+            # Update previous answers for context (match main flow pattern)
+            if turn_result.get('success') and turn_result.get('answer') is not None:
+                # Extract entity from plan for tracking
+                entity = "unknown"
+                operation = "unknown"
+                if 'plan' in turn_result and turn_result['plan']:
+                    for step in turn_result['plan'].get('steps', []):
+                        if step.get('tool') == 'extract_value' and step.get('source') == 'table':
+                            table_params = step.get('table_params', {})
+                            entity = table_params.get('row_query', 'unknown')
+                            operation = 'extraction'
+                            break
+                        elif step.get('tool') == 'compute' and step.get('operation'):
+                            operation = step['operation']
+                
+                previous_answers[f"prev_{turn_idx}"] = {
+                    "value": turn_result['answer'],
+                    "entity": entity,
+                    "operation": operation,
+                    "question": question[:60] + "..." if len(question) > 60 else question
+                }
+            
+            # Rate limiting
+            await asyncio.sleep(1)
+        
+        num_turns = len(questions)
+        
+        # Calculate conversation-level metrics
+        return {
+            'example_id': record_id,
+            'model': model_name,
+            'features': example['features'],
+            'num_turns': num_turns,
+            'turns': turn_results,
+            
+            # Accuracy metrics
+            'numerical_accuracy': numerical_correct / num_turns if num_turns > 0 else 0,
+            'financial_accuracy': financial_correct / num_turns if num_turns > 0 else 0,
+            'soft_match_accuracy': soft_match_correct / num_turns if num_turns > 0 else 0,
+            
+            # Correct turns (x out of y)
+            'correct_turns': f"{financial_correct}/{num_turns}",
+            'numerical_correct_turns': f"{numerical_correct}/{num_turns}",
+            'soft_match_correct_turns': f"{soft_match_correct}/{num_turns}",
+            
+            # Token usage
+            'total_tokens': total_tokens,
+            'prompt_tokens': total_prompt_tokens,
+            'completion_tokens': total_completion_tokens,
+            'avg_tokens_per_turn': total_tokens / num_turns if num_turns > 0 else 0,
+            
+            # Response time
+            'total_response_time_ms': total_response_time_ms,
+            'avg_response_time_ms': total_response_time_ms / num_turns if num_turns > 0 else 0,
+            
+            # Legacy compatibility
+            'conversation_accuracy': financial_correct / num_turns if num_turns > 0 else 0,
+            'all_correct': financial_correct == num_turns
+        }
+    
+    async def evaluate_model_async(self, model_name: str) -> Dict[str, Any]:
+        """Evaluate a single model on the golden dataset."""
+        console.print(f"\n[bold cyan]{'='*80}[/bold cyan]")
+        console.print(f"[bold cyan]Evaluating model: {model_name}[/bold cyan]")
+        console.print(f"[bold cyan]{'='*80}[/bold cyan]\n")
+        
+        # Create model-specific output directory
+        model_output_dir = self.output_dir / model_name.replace(":", "_").replace("/", "_")
+        model_output_dir.mkdir(parents=True, exist_ok=True)
+        
+        results = []
+        
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console
+        ) as progress:
+            task = progress.add_task(
+                f"[cyan]Evaluating {model_name}...",
+                total=len(self.examples)
+            )
+            
+            for i, example in enumerate(self.examples, 1):
+                example_id = example['id']
+                features = example['features']
+                
+                progress.update(
+                    task,
+                    description=f"[cyan]Evaluating {example_id} ({i}/{len(self.examples)})"
+                )
+                
+                try:
+                    result = await self.evaluate_example(example, model_name)
+                    results.append(result)
+                    
+                    # Print summary
+                    console.print(
+                        f"  [{i}/{len(self.examples)}] {example_id}: "
+                        f"Accuracy={result['conversation_accuracy']:.2%}, "
+                        f"Turns={features['num_dialogue_turns']}"
+                    )
+                    
+                except Exception as e:
+                    console.print(f"  [red]ERROR on {example_id}: {str(e)}[/red]")
+                    results.append({
+                        'example_id': example_id,
+                        'model': model_name,
+                        'features': example['features'],
+                        'error': str(e)
+                    })
+                
+                progress.advance(task)
+        
+        # Save results
+        results_file = model_output_dir / 'results.json'
+        with open(results_file, 'w') as f:
+            json.dump(results, f, indent=2)
+        
+        console.print(f"\n[green]✓ Saved results to {results_file}[/green]")
+        
+        # Calculate aggregate metrics
+        aggregate_metrics = self._calculate_aggregate_metrics(results)
+        
+        return {
+            'model': model_name,
+            'results': results,
+            'aggregate_metrics': aggregate_metrics
+        }
+    
+    def evaluate_model(self, model_name: str) -> Dict[str, Any]:
+        """Synchronous wrapper for evaluate_model_async."""
+        return asyncio.run(self.evaluate_model_async(model_name))
+    
+    def _calculate_aggregate_metrics(self, results: List[Dict]) -> Dict[str, Any]:
+        """Calculate comprehensive aggregate metrics across all examples."""
+        successful_results = [r for r in results if 'error' not in r]
+        
+        if not successful_results:
+            return {'error': 'No successful evaluations'}
+        
+        total = len(successful_results)
+        
+        # Calculate accuracy metrics (all three types)
+        numerical_accuracies = [r['numerical_accuracy'] for r in successful_results]
+        financial_accuracies = [r['financial_accuracy'] for r in successful_results]
+        soft_match_accuracies = [r['soft_match_accuracy'] for r in successful_results]
+        all_correct_count = sum(1 for r in successful_results if r['all_correct'])
+        
+        # Calculate token and timing metrics
+        total_tokens = sum(r.get('total_tokens', 0) for r in successful_results)
+        avg_tokens_per_example = total_tokens / total if total > 0 else 0
+        avg_tokens_per_turn = sum(r.get('avg_tokens_per_turn', 0) for r in successful_results) / total if total > 0 else 0
+        
+        total_response_time = sum(r.get('total_response_time_ms', 0) for r in successful_results)
+        avg_response_time_per_example = total_response_time / total if total > 0 else 0
+        avg_response_time_per_turn = sum(r.get('avg_response_time_ms', 0) for r in successful_results) / total if total > 0 else 0
+        
+        # Calculate by feature category (using financial accuracy as primary)
+        by_turns_numerical = {}
+        by_turns_financial = {}
+        by_turns_soft = {}
+        by_turns_tokens = {}
+        by_turns_time = {}
+        
+        by_type2_numerical = {'true': [], 'false': []}
+        by_type2_financial = {'true': [], 'false': []}
+        by_type2_soft = {'true': [], 'false': []}
+        
+        by_non_numeric_numerical = {'true': [], 'false': []}
+        by_non_numeric_financial = {'true': [], 'false': []}
+        by_non_numeric_soft = {'true': [], 'false': []}
+        
+        for r in successful_results:
+            turns = r['features']['num_dialogue_turns']
+            type2 = str(r['features']['has_type2_question']).lower()
+            non_numeric = str(r['features']['has_non_numeric_values']).lower()
+            
+            numerical_acc = r['numerical_accuracy']
+            financial_acc = r['financial_accuracy']
+            soft_acc = r['soft_match_accuracy']
+            tokens = r.get('avg_tokens_per_turn', 0)
+            response_time = r.get('avg_response_time_ms', 0)
+            
+            # By turns
+            if turns <= 2:
+                turn_key = '1-2'
+            elif turns <= 4:
+                turn_key = '3-4'
+            else:
+                turn_key = '5+'
+            
+            if turn_key not in by_turns_numerical:
+                by_turns_numerical[turn_key] = []
+                by_turns_financial[turn_key] = []
+                by_turns_soft[turn_key] = []
+                by_turns_tokens[turn_key] = []
+                by_turns_time[turn_key] = []
+            
+            by_turns_numerical[turn_key].append(numerical_acc)
+            by_turns_financial[turn_key].append(financial_acc)
+            by_turns_soft[turn_key].append(soft_acc)
+            by_turns_tokens[turn_key].append(tokens)
+            by_turns_time[turn_key].append(response_time)
+            
+            # By type2
+            by_type2_numerical[type2].append(numerical_acc)
+            by_type2_financial[type2].append(financial_acc)
+            by_type2_soft[type2].append(soft_acc)
+            
+            # By non_numeric
+            by_non_numeric_numerical[non_numeric].append(numerical_acc)
+            by_non_numeric_financial[non_numeric].append(financial_acc)
+            by_non_numeric_soft[non_numeric].append(soft_acc)
+        
+        return {
+            'total_examples': total,
+            'errors': len(results) - total,
+            'overall': {
+                'numerical_accuracy': sum(numerical_accuracies) / total if total > 0 else 0,
+                'financial_accuracy': sum(financial_accuracies) / total if total > 0 else 0,
+                'soft_match_accuracy': sum(soft_match_accuracies) / total if total > 0 else 0,
+                'perfect_conversations': all_correct_count,
+                'perfect_rate': all_correct_count / total if total > 0 else 0,
+                'avg_tokens_per_example': avg_tokens_per_example,
+                'avg_tokens_per_turn': avg_tokens_per_turn,
+                'avg_response_time_ms_per_example': avg_response_time_per_example,
+                'avg_response_time_ms_per_turn': avg_response_time_per_turn
+            },
+            'by_turns': {
+                'numerical_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_turns_numerical.items()},
+                'financial_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_turns_financial.items()},
+                'soft_match_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_turns_soft.items()},
+                'avg_tokens_per_turn': {k: sum(v) / len(v) if v else 0 for k, v in by_turns_tokens.items()},
+                'avg_response_time_ms': {k: sum(v) / len(v) if v else 0 for k, v in by_turns_time.items()}
+            },
+            'by_type2_question': {
+                'numerical_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_type2_numerical.items()},
+                'financial_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_type2_financial.items()},
+                'soft_match_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_type2_soft.items()}
+            },
+            'by_non_numeric_values': {
+                'numerical_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_non_numeric_numerical.items()},
+                'financial_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_non_numeric_financial.items()},
+                'soft_match_accuracy': {k: sum(v) / len(v) if v else 0 for k, v in by_non_numeric_soft.items()}
+            }
+        }
+    
+    def compare_models(self, model_results: List[Dict]) -> None:
+        """Generate comprehensive comparison report across all models."""
+        console.print(f"\n[bold cyan]{'='*100}[/bold cyan]")
+        console.print("[bold cyan]MODEL COMPARISON REPORT - COMPREHENSIVE METRICS[/bold cyan]")
+        console.print(f"[bold cyan]{'='*100}[/bold cyan]\n")
+        
+        # Overall comparison with all accuracy types
+        console.print("[bold]Overall Performance - Accuracy Metrics:[/bold]")
+        console.print(f"{'Model':<30} {'Numerical':>12} {'Financial':>12} {'Soft Match':>12} {'Perfect Rate':>14}")
+        console.print("-" * 100)
+        
+        for result in model_results:
+            model = result['model']
+            metrics = result['aggregate_metrics']
+            overall = metrics.get('overall', {})
+            
+            numerical = overall.get('numerical_accuracy', 0)
+            financial = overall.get('financial_accuracy', 0)
+            soft = overall.get('soft_match_accuracy', 0)
+            perfect_rate = overall.get('perfect_rate', 0)
+            
+            console.print(f"{model:<30} {numerical:>11.2%} {financial:>11.2%} {soft:>11.2%} {perfect_rate:>13.2%}")
+        
+        # Token and timing metrics
+        console.print("\n\n[bold]Overall Performance - Efficiency Metrics:[/bold]")
+        console.print(f"{'Model':<30} {'Avg Tokens/Turn':>18} {'Avg Response (ms)':>18}")
+        console.print("-" * 100)
+        
+        for result in model_results:
+            model = result['model']
+            metrics = result['aggregate_metrics']
+            overall = metrics.get('overall', {})
+            
+            tokens = overall.get('avg_tokens_per_turn', 0)
+            response_time = overall.get('avg_response_time_ms_per_turn', 0)
+            
+            console.print(f"{model:<30} {tokens:>17.1f} {response_time:>17.1f}")
+        
+        # By dialogue turns (Financial Accuracy)
+        console.print("\n\n[bold]Performance by Dialogue Turns (Financial Accuracy):[/bold]")
+        console.print(f"{'Model':<30} {'1-2 turns':>12} {'3-4 turns':>12} {'5+ turns':>12}")
+        console.print("-" * 100)
+        
+        for result in model_results:
+            model = result['model']
+            by_turns = result['aggregate_metrics'].get('by_turns', {})
+            financial_by_turns = by_turns.get('financial_accuracy', {})
+            
+            turns_1_2 = financial_by_turns.get('1-2', 0)
+            turns_3_4 = financial_by_turns.get('3-4', 0)
+            turns_5_plus = financial_by_turns.get('5+', 0)
+            
+            console.print(f"{model:<30} {turns_1_2:>11.2%} {turns_3_4:>11.2%} {turns_5_plus:>11.2%}")
+        
+        # By type2 question (Financial Accuracy)
+        console.print("\n\n[bold]Performance by Type2 Question (Financial Accuracy):[/bold]")
+        console.print(f"{'Model':<30} {'No Type2':>12} {'Has Type2':>12}")
+        console.print("-" * 100)
+        
+        for result in model_results:
+            model = result['model']
+            by_type2 = result['aggregate_metrics'].get('by_type2_question', {})
+            financial_by_type2 = by_type2.get('financial_accuracy', {})
+            
+            no_type2 = financial_by_type2.get('false', 0)
+            has_type2 = financial_by_type2.get('true', 0)
+            
+            console.print(f"{model:<30} {no_type2:>11.2%} {has_type2:>11.2%}")
+        
+        # By non-numeric values (Financial Accuracy)
+        console.print("\n\n[bold]Performance by Non-Numeric Values (Financial Accuracy):[/bold]")
+        console.print(f"{'Model':<30} {'No Non-Numeric':>16} {'Has Non-Numeric':>18}")
+        console.print("-" * 100)
+        
+        for result in model_results:
+            model = result['model']
+            by_non_numeric = result['aggregate_metrics'].get('by_non_numeric_values', {})
+            financial_by_non_numeric = by_non_numeric.get('financial_accuracy', {})
+            
+            no_non_numeric = financial_by_non_numeric.get('false', 0)
+            has_non_numeric = financial_by_non_numeric.get('true', 0)
+            
+            console.print(f"{model:<30} {no_non_numeric:>15.2%} {has_non_numeric:>17.2%}")
+        
+        # Save comparison report
+        comparison_file = self.output_dir / 'comparison_report.json'
+        comparison_data = {
+            'timestamp': datetime.now().isoformat(),
+            'models': [r['model'] for r in model_results],
+            'model_results': [
+                {
+                    'model': r['model'],
+                    'aggregate_metrics': r['aggregate_metrics']
+                }
+                for r in model_results
+            ]
+        }
+        
+        with open(comparison_file, 'w') as f:
+            json.dump(comparison_data, f, indent=2)
+        
+        console.print(f"\n[green]✓ Saved comparison report to {comparison_file}[/green]")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Evaluate financial agent on golden dataset across multiple models'
+    )
+    parser.add_argument(
+        '--golden-dataset',
+        default='data/golden_dataset.json',
+        help='Path to golden dataset JSON file'
+    )
+    parser.add_argument(
+        '--output-dir',
+        default='golden_eval_results',
+        help='Directory to save evaluation results'
+    )
+    parser.add_argument(
+        '--models',
+        nargs='+',
+        default=['gpt-4o', 'gpt-4o-mini', 'o3-mini', 'claude-3-5-sonnet-20241022'],
+        help='Models to evaluate (space-separated)'
+    )
+    
+    args = parser.parse_args()
+    
+    console.print("\n[bold cyan]═══════════════════════════════════════════════════════════════════════════════[/bold cyan]")
+    console.print("[bold cyan]                    GOLDEN DATASET MODEL EVALUATION                            [/bold cyan]")
+    console.print("[bold cyan]═══════════════════════════════════════════════════════════════════════════════[/bold cyan]\n")
+    
+    console.print(f"[yellow]Dataset:[/yellow] {args.golden_dataset}")
+    console.print(f"[yellow]Output:[/yellow] {args.output_dir}")
+    console.print(f"[yellow]Models:[/yellow] {', '.join(args.models)}\n")
+    
+    # Create evaluator
+    evaluator = GoldenDatasetEvaluator(
+        golden_dataset_path=args.golden_dataset,
+        output_dir=args.output_dir
+    )
+    
+    # Evaluate each model
+    model_results = []
+    for model_name in args.models:
+        try:
+            result = evaluator.evaluate_model(model_name)
+            model_results.append(result)
+        except Exception as e:
+            console.print(f"\n[red]✗ Error evaluating {model_name}: {str(e)}[/red]")
+            import traceback
+            traceback.print_exc()
+            continue
+    
+    # Generate comparison report
+    if model_results:
+        evaluator.compare_models(model_results)
+    else:
+        console.print("\n[red]✗ No models were successfully evaluated[/red]")
+        sys.exit(1)
+    
+    console.print(f"\n[bold green]{'='*80}[/bold green]")
+    console.print("[bold green]                       EVALUATION COMPLETE                              [/bold green]")
+    console.print(f"[bold green]{'='*80}[/bold green]\n")
+    console.print(f"[green]Results saved to: {args.output_dir}[/green]\n")
+
+
+if __name__ == '__main__':
+    main()

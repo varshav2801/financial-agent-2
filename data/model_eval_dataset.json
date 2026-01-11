@@ -1,0 +1,841 @@
+{
+  "metadata": {
+    "description": "Balanced golden dataset for financial agent evaluation",
+    "total_examples": 12,
+    "distribution": {
+      "1-2_turns": 4,
+      "3-4_turns": 4,
+      "5+_turns": 4
+    },
+    "feature_coverage": {
+      "has_type2_question": "Both true and false covered in each turn category",
+      "has_non_numeric_values": "Both true and false covered in each turn category"
+    }
+  },
+  "examples": [
+    {
+      "id": "Double_MAS/2012/page_92.pdf",
+      "doc": {
+        "pre_text": "masco corporation notes to consolidated financial statements ( continued ) t . other commitments and contingencies litigation . we are subject to claims , charges , litigation and other proceedings in the ordinary course of our business , including those arising from or related to contractual matters , intellectual property , personal injury , environmental matters , product liability , construction defect , insurance coverage , personnel and employment disputes and other matters , including class actions . we believe we have adequate defenses in these matters and that the outcome of these matters is not likely to have a material adverse effect on us . however , there is no assurance that we will prevail in these matters , and we could in the future incur judgments , enter into settlements of claims or revise our expectations regarding the outcome of these matters , which could materially impact our results of operations . in july 2012 , the company reached a settlement agreement related to the columbus drywall litigation . the company and its insulation installation companies named in the suit agreed to pay $ 75 million in return for dismissal with prejudice and full release of all claims . the company and its insulation installation companies continue to deny that the challenged conduct was unlawful and admit no wrongdoing as part of the settlement . a settlement was reached to eliminate the considerable expense and uncertainty of this lawsuit . the company recorded the settlement expense in the second quarter of 2012 and the amount was paid in the fourth quarter of 2012 . warranty . at the time of sale , the company accrues a warranty liability for the estimated cost to provide products , parts or services to repair or replace products in satisfaction of warranty obligations . during the third quarter of 2012 , a business in the other specialty products segment recorded a $ 12 million increase in expected future warranty claims resulting from the completion of an analysis prepared by the company based upon its periodic assessment of recent business unit specific operating trends including , among others , home ownership demographics , sales volumes , manufacturing quality , an analysis of recent warranty claim activity and an estimate of current costs to service anticipated claims . changes in the company 2019s warranty liability were as follows , in millions: .",
+        "post_text": "investments . with respect to the company 2019s investments in private equity funds , the company had , at december 31 , 2012 , commitments to contribute up to $ 19 million of additional capital to such funds representing the company 2019s aggregate capital commitment to such funds less capital contributions made to date . the company is contractually obligated to make additional capital contributions to certain of its private equity funds upon receipt of a capital call from the private equity fund . the company has no control over when or if the capital calls will occur . capital calls are funded in cash and generally result in an increase in the carrying value of the company 2019s investment in the private equity fund when paid. .",
+        "table": {
+          "2012": {
+            "balance at january 1": 102.0,
+            "accruals for warranties issued during the year": 42.0,
+            "accruals related to pre-existing warranties": 16.0,
+            "settlements made ( in cash or kind ) during the year": -38.0,
+            "other net ( including currency translation )": -4.0,
+            "balance at december 31": 118.0
+          },
+          "2011": {
+            "balance at january 1": 107.0,
+            "accruals for warranties issued during the year": 28.0,
+            "accruals related to pre-existing warranties": 8.0,
+            "settlements made ( in cash or kind ) during the year": -38.0,
+            "other net ( including currency translation )": -3.0,
+            "balance at december 31": 102.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what was the difference in the company 2019s warranty liability between 2011 and 2012?",
+          "and the percentage change of this value?"
+        ],
+        "conv_answers": [
+          "16",
+          "15.7%"
+        ],
+        "turn_program": [
+          "subtract(118, 102)",
+          "subtract(118, 102), divide(#0, 102)"
+        ],
+        "executed_answers": [
+          16.0,
+          0.15686
+        ],
+        "qa_split": [
+          false,
+          false
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 2,
+        "has_type2_question": false,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": false
+      }
+    },
+    {
+      "id": "Single_MRO/2009/page_127.pdf-1",
+      "doc": {
+        "pre_text": "marathon oil corporation notes to consolidated financial statements ( g ) this obligation relates to a lease of equipment at united states steel 2019s clairton works cokemaking facility in pennsylvania . we are the primary obligor under this lease . under the financial matters agreement , united states steel has assumed responsibility for all obligations under this lease . this lease is an amortizing financing with a final maturity of 2012 . ( h ) these notes are senior secured notes of marathon oil canada corporation . the notes are secured by substantially all of marathon oil canada corporation 2019s assets . in january 2008 , we provided a full and unconditional guarantee covering the payment of all principal and interest due under the senior notes . ( i ) these obligations as of december 31 , 2009 include $ 36 million related to assets under construction at that date for which a capital lease will commence upon completion of construction . the amounts currently reported are based upon the percent of construction completed as of december 31 , 2009 and therefore do not reflect future minimum lease obligations of $ 164 million related to the asset . ( j ) payments of long-term debt for the years 2010 - 2014 are $ 102 million , $ 246 million , $ 1492 million , $ 287 million and $ 802 million . united steel is due to pay $ 17 million in 2010 , $ 161 million in 2011 , $ 19 million in 2012 , and $ 11 for year 2014 . ( k ) in the event of a change in control , as defined in the related agreements , debt obligations totaling $ 662 million at december 31 , 2009 , may be declared immediately due and payable . ( l ) see note 16 for information on interest rate swaps . 20 . asset retirement obligations the following summarizes the changes in asset retirement obligations : ( in millions ) 2009 2008 .",
+        "post_text": "asset retirement obligations as of december 31 ( a ) $ 1102 $ 965 ( a ) includes asset retirement obligation of $ 3 and $ 2 million classified as short-term at december 31 , 2009 , and 2008. .",
+        "table": {
+          "2009": {
+            "asset retirement obligations as of january 1": 965.0,
+            "liabilities incurred including acquisitions": 14.0,
+            "liabilities settled": -65.0,
+            "accretion expense ( included in depreciation depletion and amortization )": 64.0,
+            "revisions to previous estimates": 124.0,
+            "held for sale": "-",
+            "asset retirement obligations as of december 31 ( a )": 1102.0
+          },
+          "2008": {
+            "asset retirement obligations as of january 1": 1134.0,
+            "liabilities incurred including acquisitions": 30.0,
+            "liabilities settled": -94.0,
+            "accretion expense ( included in depreciation depletion and amortization )": 66.0,
+            "revisions to previous estimates": 24.0,
+            "held for sale": -195.0,
+            "asset retirement obligations as of december 31 ( a )": 965.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what was the net difference in asset retirement obligations between 2008 and 2009?",
+          "what was the percent change?"
+        ],
+        "conv_answers": [
+          "137",
+          "14.2%"
+        ],
+        "turn_program": [
+          "subtract(1102, 965)",
+          "subtract(1102, 965), divide(#0, 965)"
+        ],
+        "executed_answers": [
+          137.0,
+          0.14197
+        ],
+        "qa_split": [
+          false,
+          false
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 2,
+        "has_type2_question": false,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": true
+      }
+    },
+    {
+      "id": "Double_AES/2011/page_230.pdf",
+      "doc": {
+        "pre_text": "the aes corporation notes to consolidated financial statements 2014 ( continued ) december 31 , 2011 , 2010 , and 2009 ( 1 ) weighted average interest rate at december 31 , 2011 . ( 2 ) the company has interest rate swaps and interest rate option agreements in an aggregate notional principal amount of approximately $ 3.6 billion on non-recourse debt outstanding at december 31 , 2011 . the swap agreements economically change the variable interest rates on the portion of the debt covered by the notional amounts to fixed rates ranging from approximately 1.44% ( 1.44 % ) to 6.98% ( 6.98 % ) . the option agreements fix interest rates within a range from 1.00% ( 1.00 % ) to 7.00% ( 7.00 % ) . the agreements expire at various dates from 2016 through 2028 . ( 3 ) multilateral loans include loans funded and guaranteed by bilaterals , multilaterals , development banks and other similar institutions . ( 4 ) non-recourse debt of $ 704 million and $ 945 million as of december 31 , 2011 and 2010 , respectively , was excluded from non-recourse debt and included in current and long-term liabilities of held for sale and discontinued businesses in the accompanying consolidated balance sheets . non-recourse debt as of december 31 , 2011 is scheduled to reach maturity as set forth in the table below : december 31 , annual maturities ( in millions ) .",
+        "post_text": "as of december 31 , 2011 , aes subsidiaries with facilities under construction had a total of approximately $ 1.4 billion of committed but unused credit facilities available to fund construction and other related costs . excluding these facilities under construction , aes subsidiaries had approximately $ 1.2 billion in a number of available but unused committed revolving credit lines to support their working capital , debt service reserves and other business needs . these credit lines can be used in one or more of the following ways : solely for borrowings ; solely for letters of credit ; or a combination of these uses . the weighted average interest rate on borrowings from these facilities was 14.75% ( 14.75 % ) at december 31 , 2011 . on october 3 , 2011 , dolphin subsidiary ii , inc . ( 201cdolphin ii 201d ) , a newly formed , wholly-owned special purpose indirect subsidiary of aes , entered into an indenture ( the 201cindenture 201d ) with wells fargo bank , n.a . ( the 201ctrustee 201d ) as part of its issuance of $ 450 million aggregate principal amount of 6.50% ( 6.50 % ) senior notes due 2016 ( the 201c2016 notes 201d ) and $ 800 million aggregate principal amount of 7.25% ( 7.25 % ) senior notes due 2021 ( the 201c7.25% ( 201c7.25 % ) 2021 notes 201d , together with the 2016 notes , the 201cnotes 201d ) to finance the acquisition ( the 201cacquisition 201d ) of dpl . upon closing of the acquisition on november 28 , 2011 , dolphin ii was merged into dpl with dpl being the surviving entity and obligor . the 2016 notes and the 7.25% ( 7.25 % ) 2021 notes are included under 201cnotes and bonds 201d in the non-recourse detail table above . see note 23 2014acquisitions and dispositions for further information . interest on the 2016 notes and the 7.25% ( 7.25 % ) 2021 notes accrues at a rate of 6.50% ( 6.50 % ) and 7.25% ( 7.25 % ) per year , respectively , and is payable on april 15 and october 15 of each year , beginning april 15 , 2012 . prior to september 15 , 2016 with respect to the 2016 notes and july 15 , 2021 with respect to the 7.25% ( 7.25 % ) 2021 notes , dpl may redeem some or all of the 2016 notes or 7.25% ( 7.25 % ) 2021 notes at par , plus a 201cmake-whole 201d amount set forth in .",
+        "table": {
+          "annual maturities ( in millions )": {
+            "2012": 2152.0,
+            "2013": 1389.0,
+            "2014": 1697.0,
+            "2015": 851.0,
+            "2016": 2301.0,
+            "thereafter": 7698.0,
+            "total non-recourse debt": 16088.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what is the total amount available under the committed credit facilities as of december 31, 2011, in billions?",
+          "and as of that same date, how much did the non-recourse debt due in 2014 represent in relation to the total debt, in percentage?"
+        ],
+        "conv_answers": [
+          "2.6",
+          "11%"
+        ],
+        "turn_program": [
+          "add(1.4, 1.2)",
+          "divide(1697, 16088)"
+        ],
+        "executed_answers": [
+          2.6,
+          0.10548
+        ],
+        "qa_split": [
+          false,
+          true
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 2,
+        "has_type2_question": true,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": false
+      }
+    },
+    {
+      "id": "Double_AES/2011/page_131.pdf",
+      "doc": {
+        "pre_text": "management 2019s priorities management has re-evaluated its priorities following the appointment of its new ceo in september 2011 . management is focused on the following priorities : 2022 execution of our geographic concentration strategy to maximize shareholder value through disciplined capital allocation including : 2022 platform expansion in brazil , chile , colombia , and the united states , 2022 platform development in turkey , poland , and the united kingdom , 2022 corporate debt reduction , and 2022 a return of capital to shareholders , including our intent to initiate a dividend in 2012 ; 2022 closing the sales of businesses for which we have signed agreements with counterparties and prudently exiting select non-strategic markets ; 2022 optimizing profitability of operations in the existing portfolio ; 2022 integration of dpl into our portfolio ; 2022 implementing a management realignment of our businesses under two business lines : utilities and generation , and achieving cost savings through the alignment of overhead costs with business requirements , systems automation and optimal allocation of business development spending ; and 2022 completion of an approximately 2400 mw construction program and the integration of new projects into existing businesses . during the year ended december 31 , 2011 , the following projects commenced commercial operations : project location fuel aes equity interest ( percent , rounded ) aes solar ( 1 ) . . . . . . . . . . . . . . . . . . . . . . . various solar 62 50% ( 50 % ) .",
+        "post_text": "trinidad ( 3 ) . . . . . . . . . . . . . . . . . . . . . . . . trinidad gas 394 10% ( 10 % ) ( 1 ) aes solar energy ltd . is a joint venture with riverstone holdings and is accounted for as an equity method investment . plants that came online during the year include : kalipetrovo , ugento , soemina , francavilla fontana , latina , cocomeri , francofonte , scopeto , sabaudia , aprilla-1 , siracusa 1-3 complex , manduria apollo and rinaldone . ( 2 ) joint venture with i.c . energy . ( 3 ) an equity method investment held by aes . key trends and uncertainties our operations continue to face many risks as discussed in item 1a . 2014risk factors of this form 10-k . some of these challenges are also described below in 201ckey drivers of results in 2011 201d . we continue to monitor our operations and address challenges as they arise . operations in august 2010 , the esti power plant , a 120 mw run-of-river hydroelectric power plant in panama , was taken offline due to damage to its tunnel infrastructure . aes panama is partially covered for business .",
+        "table": {
+          "location": {
+            "aes solar ( 1 )": "various",
+            "angamos": "chile",
+            "changuinola": "panama",
+            "kumkoy ( 2 )": "turkey",
+            "laurel mountain": "us-wv",
+            "maritza": "bulgaria",
+            "sao joaquim": "brazil",
+            "trinidad ( 3 )": "trinidad"
+          },
+          "fuel": {
+            "aes solar ( 1 )": "solar",
+            "angamos": "coal",
+            "changuinola": "hydro",
+            "kumkoy ( 2 )": "hydro",
+            "laurel mountain": "wind",
+            "maritza": "coal",
+            "sao joaquim": "hydro",
+            "trinidad ( 3 )": "gas"
+          },
+          "gross mw": {
+            "aes solar ( 1 )": 62.0,
+            "angamos": 545.0,
+            "changuinola": 223.0,
+            "kumkoy ( 2 )": 18.0,
+            "laurel mountain": 98.0,
+            "maritza": 670.0,
+            "sao joaquim": 3.0,
+            "trinidad ( 3 )": 394.0
+          },
+          "aes equity interest ( percent rounded )": {
+            "aes solar ( 1 )": -50.0,
+            "angamos": -71.0,
+            "changuinola": -100.0,
+            "kumkoy ( 2 )": -51.0,
+            "laurel mountain": -100.0,
+            "maritza": -100.0,
+            "sao joaquim": -24.0,
+            "trinidad ( 3 )": -10.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what is the company's total coal capacity in gross mw?"
+        ],
+        "conv_answers": [
+          "1215"
+        ],
+        "turn_program": [
+          "add(670, 545)"
+        ],
+        "executed_answers": [
+          1215.0
+        ],
+        "qa_split": [
+          true
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 1,
+        "has_type2_question": true,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": true
+      }
+    },
+    {
+      "id": "Single_JKHY/2009/page_28.pdf-3",
+      "doc": {
+        "pre_text": "26 | 2009 annual report in fiscal 2008 , revenues in the credit union systems and services business segment increased 14% ( 14 % ) from fiscal 2007 . all revenue components within the segment experienced growth during fiscal 2008 . license revenue generated the largest dollar growth in revenue as episys ae , our flagship core processing system aimed at larger credit unions , experienced strong sales throughout the year . support and service revenue , which is the largest component of total revenues for the credit union segment , experienced 34 percent growth in eft support and 10 percent growth in in-house support . gross profit in this business segment increased $ 9344 in fiscal 2008 compared to fiscal 2007 , due primarily to the increase in license revenue , which carries the highest margins . liquidity and capital resources we have historically generated positive cash flow from operations and have generally used funds generated from operations and short-term borrowings on our revolving credit facility to meet capital requirements . we expect this trend to continue in the future . the company 2019s cash and cash equivalents increased to $ 118251 at june 30 , 2009 from $ 65565 at june 30 , 2008 . the following table summarizes net cash from operating activities in the statement of cash flows : 2009 2008 2007 .",
+        "post_text": "year ended june 30 , cash provided by operations increased $ 25587 to $ 206588 for the fiscal year ended june 30 , 2009 as compared to $ 181001 for the fiscal year ended june 30 , 2008 . this increase is primarily attributable to a decrease in receivables compared to the same period a year ago of $ 21214 . this decrease is largely the result of fiscal 2010 annual software maintenance billings being provided to customers earlier than in the prior year , which allowed more cash to be collected before the end of the fiscal year than in previous years . further , we collected more cash overall related to revenues that will be recognized in subsequent periods in the current year than in fiscal 2008 . cash used in investing activities for the fiscal year ended june 2009 was $ 59227 and includes $ 3027 in contingent consideration paid on prior years 2019 acquisitions . cash used in investing activities for the fiscal year ended june 2008 was $ 102148 and includes payments for acquisitions of $ 48109 , plus $ 1215 in contingent consideration paid on prior years 2019 acquisitions . capital expenditures for fiscal 2009 were $ 31562 compared to $ 31105 for fiscal 2008 . cash used for software development in fiscal 2009 was $ 24684 compared to $ 23736 during the prior year . net cash used in financing activities for the current fiscal year was $ 94675 and includes the repurchase of 3106 shares of our common stock for $ 58405 , the payment of dividends of $ 26903 and $ 13489 net repayment on our revolving credit facilities . cash used in financing activities was partially offset by proceeds of $ 3773 from the exercise of stock options and the sale of common stock ( through the employee stock purchase plan ) and $ 348 excess tax benefits from stock option exercises . during fiscal 2008 , net cash used in financing activities for the fiscal year was $ 101905 and includes the repurchase of 4200 shares of our common stock for $ 100996 , the payment of dividends of $ 24683 and $ 429 net repayment on our revolving credit facilities . cash used in financing activities was partially offset by proceeds of $ 20394 from the exercise of stock options and the sale of common stock and $ 3809 excess tax benefits from stock option exercises . beginning during fiscal 2008 , us financial markets and many of the largest us financial institutions have been shaken by negative developments in the home mortgage industry and the mortgage markets , and particularly the markets for subprime mortgage-backed securities . since that time , these and other such developments have resulted in a broad , global economic downturn . while we , as is the case with most companies , have experienced the effects of this downturn , we have not experienced any significant issues with our current collection efforts , and we believe that any future impact to our liquidity will be minimized by cash generated by recurring sources of revenue and due to our access to available lines of credit. .",
+        "table": {
+          "Year ended June 30, 2009": {
+            "net income": 103102.0,
+            "non-cash expenses": 74397.0,
+            "change in receivables": 21214.0,
+            "change in deferred revenue": 21943.0,
+            "change in other assets and liabilities": -14068.0,
+            "net cash from operating activities": 206588.0
+          },
+          "2008": {
+            "net income": 104222.0,
+            "non-cash expenses": 70420.0,
+            "change in receivables": -2913.0,
+            "change in deferred revenue": 5100.0,
+            "change in other assets and liabilities": 4172.0,
+            "net cash from operating activities": 181001.0
+          },
+          "2007": {
+            "net income": 104681.0,
+            "non-cash expenses": 56348.0,
+            "change in receivables": -28853.0,
+            "change in deferred revenue": 24576.0,
+            "change in other assets and liabilities": 17495.0,
+            "net cash from operating activities": 174247.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what is the net cash from operating activities in 2009?",
+          "what about in 2008?",
+          "what is the difference?",
+          "what percentage change does this represent?"
+        ],
+        "conv_answers": [
+          "206588",
+          "181001",
+          "25587",
+          "14.1%"
+        ],
+        "turn_program": [
+          "206588",
+          "181001",
+          "subtract(206588, 181001)",
+          "subtract(206588, 181001), divide(#0, 181001)"
+        ],
+        "executed_answers": [
+          206588.0,
+          181001.0,
+          25587.0,
+          0.14136
+        ],
+        "qa_split": [
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 4,
+        "has_type2_question": false,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": false
+      }
+    },
+    {
+      "id": "Single_RE/2013/page_40.pdf-1",
+      "doc": {
+        "pre_text": "corporate income taxes other than withholding taxes on certain investment income and premium excise taxes . if group or its bermuda subsidiaries were to become subject to u.s . income tax , there could be a material adverse effect on the company 2019s financial condition , results of operations and cash flows . united kingdom . bermuda re 2019s uk branch conducts business in the uk and is subject to taxation in the uk . bermuda re believes that it has operated and will continue to operate its bermuda operation in a manner which will not cause them to be subject to uk taxation . if bermuda re 2019s bermuda operations were to become subject to uk income tax , there could be a material adverse impact on the company 2019s financial condition , results of operations and cash flow . ireland . holdings ireland and ireland re conduct business in ireland and are subject to taxation in ireland . available information . the company 2019s annual reports on form 10-k , quarterly reports on form 10-q , current reports on form 8- k , proxy statements and amendments to those reports are available free of charge through the company 2019s internet website at http://www.everestregroup.com as soon as reasonably practicable after such reports are electronically filed with the securities and exchange commission ( the 201csec 201d ) . item 1a . risk factors in addition to the other information provided in this report , the following risk factors should be considered when evaluating an investment in our securities . if the circumstances contemplated by the individual risk factors materialize , our business , financial condition and results of operations could be materially and adversely affected and the trading price of our common shares could decline significantly . risks relating to our business fluctuations in the financial markets could result in investment losses . prolonged and severe disruptions in the public debt and equity markets , such as occurred during 2008 , could result in significant realized and unrealized losses in our investment portfolio . although financial markets have significantly improved since 2008 , they could deteriorate in the future . such declines in the financial markets could result in significant realized and unrealized losses on investments and could have a material adverse impact on our results of operations , equity , business and insurer financial strength and debt ratings . our results could be adversely affected by catastrophic events . we are exposed to unpredictable catastrophic events , including weather-related and other natural catastrophes , as well as acts of terrorism . any material reduction in our operating results caused by the occurrence of one or more catastrophes could inhibit our ability to pay dividends or to meet our interest and principal payment obligations . subsequent to april 1 , 2010 , we define a catastrophe as an event that causes a loss on property exposures before reinsurance of at least $ 10.0 million , before corporate level reinsurance and taxes . prior to april 1 , 2010 , we used a threshold of $ 5.0 million . by way of illustration , during the past five calendar years , pre-tax catastrophe losses , net of contract specific reinsurance but before cessions under corporate reinsurance programs , were as follows: .",
+        "post_text": ".",
+        "table": {
+          "pre-tax catastrophe losses": {
+            "( dollars in millions )": "",
+            "2013": 195.0,
+            "2012": 410.0,
+            "2011": 1300.4,
+            "2010": 571.1,
+            "2009": 67.4
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what is the sum of pre-tax catastrophe losses in 2012 and 2013?",
+          "what is the value in 2011?",
+          "what is the sum including 2011?"
+        ],
+        "conv_answers": [
+          "605",
+          "1300.4",
+          "1905.4"
+        ],
+        "turn_program": [
+          "add(195.0, 410.0)",
+          "1300.4",
+          "add(195.0, 410.0), add(#0, 1300.4)"
+        ],
+        "executed_answers": [
+          605.0,
+          1300.4,
+          1905.4
+        ],
+        "qa_split": [
+          false,
+          false,
+          false
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 3,
+        "has_type2_question": false,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": true
+      }
+    },
+    {
+      "id": "Double_AES/2016/page_98.pdf",
+      "doc": {
+        "pre_text": "the net decrease in the 2016 effective tax rate was due , in part , to the 2016 asset impairments in the u.s . and to the current year benefit related to a restructuring of one of our brazilian businesses that increases tax basis in long-term assets . further , the 2015 rate was impacted by the items described below . see note 20 2014asset impairment expense for additional information regarding the 2016 u.s . asset impairments . income tax expense increased $ 101 million , or 27% ( 27 % ) , to $ 472 million in 2015 . the company's effective tax rates were 41% ( 41 % ) and 26% ( 26 % ) for the years ended december 31 , 2015 and 2014 , respectively . the net increase in the 2015 effective tax rate was due , in part , to the nondeductible 2015 impairment of goodwill at our u.s . utility , dp&l and chilean withholding taxes offset by the release of valuation allowance at certain of our businesses in brazil , vietnam and the u.s . further , the 2014 rate was impacted by the sale of approximately 45% ( 45 % ) of the company 2019s interest in masin aes pte ltd. , which owns the company 2019s business interests in the philippines and the 2014 sale of the company 2019s interests in four u.k . wind operating projects . neither of these transactions gave rise to income tax expense . see note 15 2014equity for additional information regarding the sale of approximately 45% ( 45 % ) of the company 2019s interest in masin-aes pte ltd . see note 23 2014dispositions for additional information regarding the sale of the company 2019s interests in four u.k . wind operating projects . our effective tax rate reflects the tax effect of significant operations outside the u.s. , which are generally taxed at rates lower than the u.s . statutory rate of 35% ( 35 % ) . a future proportionate change in the composition of income before income taxes from foreign and domestic tax jurisdictions could impact our periodic effective tax rate . the company also benefits from reduced tax rates in certain countries as a result of satisfying specific commitments regarding employment and capital investment . see note 21 2014income taxes for additional information regarding these reduced rates . foreign currency transaction gains ( losses ) foreign currency transaction gains ( losses ) in millions were as follows: .",
+        "post_text": "total ( 1 ) $ ( 15 ) $ 107 $ 11 _____________________________ ( 1 ) includes gains of $ 17 million , $ 247 million and $ 172 million on foreign currency derivative contracts for the years ended december 31 , 2016 , 2015 and 2014 , respectively . the company recognized a net foreign currency transaction loss of $ 15 million for the year ended december 31 , 2016 primarily due to losses of $ 50 million at the aes corporation mainly due to remeasurement losses on intercompany notes , and losses on swaps and options . this loss was partially offset by gains of $ 37 million in argentina , mainly due to the favorable impact of foreign currency derivatives related to government receivables . the company recognized a net foreign currency transaction gain of $ 107 million for the year ended december 31 , 2015 primarily due to gains of : 2022 $ 124 million in argentina , due to the favorable impact from foreign currency derivatives related to government receivables , partially offset by losses from the devaluation of the argentine peso associated with u.s . dollar denominated debt , and losses at termoandes ( a u.s . dollar functional currency subsidiary ) primarily associated with cash and accounts receivable balances in local currency , 2022 $ 29 million in colombia , mainly due to the depreciation of the colombian peso , positively impacting chivor ( a u.s . dollar functional currency subsidiary ) due to liabilities denominated in colombian pesos , 2022 $ 11 million in the united kingdom , mainly due to the depreciation of the pound sterling , resulting in gains at ballylumford holdings ( a u.s . dollar functional currency subsidiary ) associated with intercompany notes payable denominated in pound sterling , and .",
+        "table": {
+          "2016": {
+            "aes corporation": -50.0,
+            "chile": -9.0,
+            "colombia": -8.0,
+            "mexico": -8.0,
+            "philippines": 12.0,
+            "united kingdom": 13.0,
+            "argentina": 37.0,
+            "other": -2.0,
+            "total ( 1 )": -15.0
+          },
+          "2015": {
+            "aes corporation": -31.0,
+            "chile": -18.0,
+            "colombia": 29.0,
+            "mexico": -6.0,
+            "philippines": 8.0,
+            "united kingdom": 11.0,
+            "argentina": 124.0,
+            "other": -10.0,
+            "total ( 1 )": 107.0
+          },
+          "2014": {
+            "aes corporation": -34.0,
+            "chile": -30.0,
+            "colombia": 17.0,
+            "mexico": -14.0,
+            "philippines": 11.0,
+            "united kingdom": 12.0,
+            "argentina": 66.0,
+            "other": -17.0,
+            "total ( 1 )": 11.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what was the total of foreign currency transaction gains ( losses ) for aes corporation in 2015, in millions?",
+          "and what was it in 2014, also in millions?",
+          "by how much, then, did that total change over the period?",
+          "and what was that change over the subsequent year, from 2015 to 2016?"
+        ],
+        "conv_answers": [
+          "-31",
+          "-34",
+          "3",
+          "-19"
+        ],
+        "turn_program": [
+          "-31",
+          "-34",
+          "subtract(-31, -34)",
+          "subtract(-50, -31)"
+        ],
+        "executed_answers": [
+          -31.0,
+          -34.0,
+          3.0,
+          -19.0
+        ],
+        "qa_split": [
+          false,
+          false,
+          false,
+          true
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 4,
+        "has_type2_question": true,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": false
+      }
+    },
+    {
+      "id": "Double_PNC/2014/page_99.pdf",
+      "doc": {
+        "pre_text": "2022 timing of available information , including the performance of first lien positions , and 2022 limitations of available historical data . pnc 2019s determination of the alll for non-impaired loans is sensitive to the risk grades assigned to commercial loans and loss rates for consumer loans . there are several other qualitative and quantitative factors considered in determining the alll . this sensitivity analysis does not necessarily reflect the nature and extent of future changes in the alll . it is intended to provide insight into the impact of adverse changes to risk grades and loss rates only and does not imply any expectation of future deterioration in the risk ratings or loss rates . given the current processes used , we believe the risk grades and loss rates currently assigned are appropriate . in the hypothetical event that the aggregate weighted average commercial loan risk grades would experience a 1% ( 1 % ) deterioration , assuming all other variables remain constant , the allowance for commercial loans would increase by approximately $ 35 million as of december 31 , 2014 . in the hypothetical event that consumer loss rates would increase by 10% ( 10 % ) , assuming all other variables remain constant , the allowance for consumer loans would increase by approximately $ 37 million at december 31 , 2014 . purchased impaired loans are initially recorded at fair value and applicable accounting guidance prohibits the carry over or creation of valuation allowances at acquisition . because the initial fair values of these loans already reflect a credit component , additional reserves are established when performance is expected to be worse than our expectations as of the acquisition date . at december 31 , 2014 , we had established reserves of $ .9 billion for purchased impaired loans . in addition , loans ( purchased impaired and non- impaired ) acquired after january 1 , 2009 were recorded at fair value . no allowance for loan losses was carried over and no allowance was created at the date of acquisition . see note 4 purchased loans in the notes to consolidated financial statements in item 8 of this report for additional information . in determining the appropriateness of the alll , we make specific allocations to impaired loans and allocations to portfolios of commercial and consumer loans . we also allocate reserves to provide coverage for probable losses incurred in the portfolio at the balance sheet date based upon current market conditions , which may not be reflected in historical loss data . commercial lending is the largest category of credits and is sensitive to changes in assumptions and judgments underlying the determination of the alll . we have allocated approximately $ 1.6 billion , or 47% ( 47 % ) , of the alll at december 31 , 2014 to the commercial lending category . consumer lending allocations are made based on historical loss experience adjusted for recent activity . approximately $ 1.7 billion , or 53% ( 53 % ) , of the alll at december 31 , 2014 has been allocated to these consumer lending categories . in addition to the alll , we maintain an allowance for unfunded loan commitments and letters of credit . we report this allowance as a liability on our consolidated balance sheet . we maintain the allowance for unfunded loan commitments and letters of credit at a level we believe is appropriate to absorb estimated probable losses on these unfunded credit facilities . we determine this amount using estimates of the probability of the ultimate funding and losses related to those credit exposures . other than the estimation of the probability of funding , this methodology is very similar to the one we use for determining our alll . we refer you to note 1 accounting policies and note 3 asset quality in the notes to consolidated financial statements in item 8 of this report for further information on certain key asset quality indicators that we use to evaluate our portfolios and establish the allowances . table 41 : allowance for loan and lease losses .",
+        "post_text": "( a ) includes charge-offs of $ 134 million taken pursuant to alignment with interagency guidance on practices for loans and lines of credit related to consumer lending in the first quarter of 2013 . the provision for credit losses totaled $ 273 million for 2014 compared to $ 643 million for 2013 . the primary drivers of the decrease to the provision were improved overall credit quality , including lower consumer loan delinquencies , and the increasing value of residential real estate which resulted in greater expected cash flows from our purchased impaired loans . for 2014 , the provision for commercial lending credit losses increased by $ 64 million , or 178% ( 178 % ) , from 2013 primarily due to continued growth in the commercial book , paired with slowing of the reserve releases related to credit quality improvement . the provision for consumer lending credit losses decreased $ 434 million , or 71% ( 71 % ) , from 2013 . the pnc financial services group , inc . 2013 form 10-k 81 .",
+        "table": {
+          "2014": {
+            "january 1": 3609.0,
+            "total net charge-offs ( a )": -531.0,
+            "provision for credit losses": 273.0,
+            "net change in allowance for unfunded loan commitments and letters of credit": -17.0,
+            "other": -3.0,
+            "december 31": 3331.0,
+            "net charge-offs to average loans ( for the year ended ) ( a )": -27.0,
+            "allowance for loan and lease losses to total loans": 1.63,
+            "commercial lending net charge-offs": -55.0,
+            "consumer lending net charge-offs ( a )": -476.0,
+            "total net charge-offs": -531.0,
+            "net charge-offs to average loans ( for the year ended )": "",
+            "commercial lending": -4.0,
+            "consumer lending ( a )": 0.62
+          },
+          "2013": {
+            "january 1": 4036.0,
+            "total net charge-offs ( a )": -1077.0,
+            "provision for credit losses": 643.0,
+            "net change in allowance for unfunded loan commitments and letters of credit": 8.0,
+            "other": -1.0,
+            "december 31": 3609.0,
+            "net charge-offs to average loans ( for the year ended ) ( a )": -57.0,
+            "allowance for loan and lease losses to total loans": 1.84,
+            "commercial lending net charge-offs": -249.0,
+            "consumer lending net charge-offs ( a )": -828.0,
+            "total net charge-offs": -1077.0,
+            "net charge-offs to average loans ( for the year ended )": "",
+            "commercial lending": -22.0,
+            "consumer lending ( a )": 1.07
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what is the impact of total net charge-offs in the balance of allowance for loan and lease losses during 2014?",
+          "what about the balance of allowance for loan and lease losses as of december 31, 2014?",
+          "what proportion is related to total net charge-offs?",
+          "what is the ratio of provision for credit losses in 2014 to 2013?"
+        ],
+        "conv_answers": [
+          "531",
+          "3609",
+          "14.7%",
+          "0.43"
+        ],
+        "turn_program": [
+          "531",
+          "3609",
+          "divide(531, 3609)",
+          "divide(273, 643)"
+        ],
+        "executed_answers": [
+          531.0,
+          3609.0,
+          0.14713,
+          0.42457
+        ],
+        "qa_split": [
+          false,
+          false,
+          false,
+          true
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 4,
+        "has_type2_question": true,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": true
+      }
+    },
+    {
+      "id": "Single_UPS/2009/page_33.pdf-2",
+      "doc": {
+        "pre_text": "( 1 ) includes shares repurchased through our publicly announced share repurchase program and shares tendered to pay the exercise price and tax withholding on employee stock options . shareowner return performance graph the following performance graph and related information shall not be deemed 201csoliciting material 201d or to be 201cfiled 201d with the securities and exchange commission , nor shall such information be incorporated by reference into any future filing under the securities act of 1933 or securities exchange act of 1934 , each as amended , except to the extent that the company specifically incorporates such information by reference into such filing . the following graph shows a five-year comparison of cumulative total shareowners 2019 returns for our class b common stock , the s&p 500 index , and the dow jones transportation average . the comparison of the total cumulative return on investment , which is the change in the quarterly stock price plus reinvested dividends for each of the quarterly periods , assumes that $ 100 was invested on december 31 , 2004 in the s&p 500 index , the dow jones transportation average , and our class b common stock . comparison of five year cumulative total return $ 40.00 $ 60.00 $ 80.00 $ 100.00 $ 120.00 $ 140.00 $ 160.00 2004 20092008200720062005 s&p 500 ups dj transport .",
+        "post_text": ".",
+        "table": {
+          "12/31/04": {
+            "united parcel service inc .": 100.0,
+            "s&p 500 index": 100.0,
+            "dow jones transportation average": 100.0
+          },
+          "12/31/05": {
+            "united parcel service inc .": 89.49,
+            "s&p 500 index": 104.91,
+            "dow jones transportation average": 111.65
+          },
+          "12/31/06": {
+            "united parcel service inc .": 91.06,
+            "s&p 500 index": 121.48,
+            "dow jones transportation average": 122.61
+          },
+          "12/31/07": {
+            "united parcel service inc .": 87.88,
+            "s&p 500 index": 128.15,
+            "dow jones transportation average": 124.35
+          },
+          "12/31/08": {
+            "united parcel service inc .": 70.48,
+            "s&p 500 index": 80.74,
+            "dow jones transportation average": 97.72
+          },
+          "12/31/09": {
+            "united parcel service inc .": 75.95,
+            "s&p 500 index": 102.11,
+            "dow jones transportation average": 115.88
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what was the change in the performance of the united parcel service inc . from 2004 to 2009?",
+          "and how much does this change represent in relation to that performance in 2004, in percentage?",
+          "what was the performance value of the s&p 500 index in 2009?",
+          "what was, then, the change in that performance from 2004 to 2009?",
+          "and how much does this change represent in relation to that performance in 2004, in percentage?",
+          "what is, then, the difference between the percent representation of the united parcel service inc . and the s&p 500 index?"
+        ],
+        "conv_answers": [
+          "-24.05",
+          "-24.05%",
+          "102.11",
+          "2.11",
+          "2.11%",
+          "-26.16%"
+        ],
+        "turn_program": [
+          "subtract(75.95, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100)",
+          "102.11",
+          "subtract(75.95, const_100), divide(#0, const_100), subtract(102.11, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100), subtract(102.11, const_100), divide(#2, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100), subtract(102.11, const_100), divide(#2, const_100), subtract(#1, #3)"
+        ],
+        "executed_answers": [
+          -24.05,
+          -0.2405,
+          102.11,
+          2.11,
+          0.0211,
+          -0.2616
+        ],
+        "qa_split": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 6,
+        "has_type2_question": false,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": false
+      }
+    },
+    {
+      "id": "Single_CE/2010/page_134.pdf-2",
+      "doc": {
+        "pre_text": "tax returns for 2001 and beyond are open for examination under statute . currently , unrecognized tax benefits are not expected to change significantly over the next 12 months . 19 . stock-based and other management compensation plans in april 2009 , the company approved a global incentive plan which replaces the company 2019s 2004 stock incentive plan . the 2009 global incentive plan ( 201cgip 201d ) enables the compensation committee of the board of directors to award incentive and nonqualified stock options , stock appreciation rights , shares of series a common stock , restricted stock , restricted stock units ( 201crsus 201d ) and incentive bonuses ( which may be paid in cash or stock or a combination thereof ) , any of which may be performance-based , with vesting and other award provisions that provide effective incentive to company employees ( including officers ) , non-management directors and other service providers . under the 2009 gip , the company no longer can grant rsus with the right to participate in dividends or dividend equivalents . the maximum number of shares that may be issued under the 2009 gip is equal to 5350000 shares plus ( a ) any shares of series a common stock that remain available for issuance under the 2004 stock incentive plan ( 201csip 201d ) ( not including any shares of series a common stock that are subject to outstanding awards under the 2004 sip or any shares of series a common stock that were issued pursuant to awards under the 2004 sip ) and ( b ) any awards under the 2004 stock incentive plan that remain outstanding that cease for any reason to be subject to such awards ( other than by reason of exercise or settlement of the award to the extent that such award is exercised for or settled in vested and non-forfeitable shares ) . as of december 31 , 2010 , total shares available for awards and total shares subject to outstanding awards are as follows : shares available for awards shares subject to outstanding awards .",
+        "post_text": "upon the termination of a participant 2019s employment with the company by reason of death or disability or by the company without cause ( as defined in the respective award agreements ) , an award in amount equal to ( i ) the value of the award granted multiplied by ( ii ) a fraction , ( x ) the numerator of which is the number of full months between grant date and the date of such termination , and ( y ) the denominator of which is the term of the award , such product to be rounded down to the nearest whole number , and reduced by ( iii ) the value of any award that previously vested , shall immediately vest and become payable to the participant . upon the termination of a participant 2019s employment with the company for any other reason , any unvested portion of the award shall be forfeited and cancelled without consideration . there was $ 19 million and $ 0 million of tax benefit realized from stock option exercises and vesting of rsus during the years ended december 31 , 2010 and 2009 , respectively . during the year ended december 31 , 2008 the company reversed $ 8 million of the $ 19 million tax benefit that was realized during the year ended december 31 , 2007 . deferred compensation in april 2007 , certain participants in the company 2019s 2004 deferred compensation plan elected to participate in a revised program , which includes both cash awards and restricted stock units ( see restricted stock units below ) . based on participation in the revised program , the company expensed $ 9 million , $ 10 million and $ 8 million during the years ended december 31 , 2010 , 2009 and 2008 , respectively , related to the revised program and made payments of $ 4 million during the year ended december 31 , 2010 to participants who left the company and $ 28 million to active employees during december 2010 . as of december 31 , 2010 , $ 1 million remains to be paid during 2011 under the revised program . as of december 31 , 2009 , there was no deferred compensation payable remaining associated with the 2004 deferred compensation plan . the company recorded expense related to participants continuing in the 2004 deferred %%transmsg*** transmitting job : d77691 pcn : 132000000 ***%%pcmsg|132 |00011|yes|no|02/09/2011 18:22|0|0|page is valid , no graphics -- color : n| .",
+        "table": {
+          "shares available for awards": {
+            "2009 global incentive plan": 2322450.0,
+            "2004 stock incentive plan": "-"
+          },
+          "shares subject to outstanding awards": {
+            "2009 global incentive plan": 2530454.0,
+            "2004 stock incentive plan": 5923147.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "how many shares are subject to outstanding awards is under the 2009 global incentive plan?",
+          "what about under the 2004 stock incentive plan?",
+          "how many total shares are subject to outstanding awards?",
+          "what about under the 2004 stock incentive plan?",
+          "what proportion does this represent?"
+        ],
+        "conv_answers": [
+          "2530454",
+          "5923147",
+          "8453601",
+          "5923147",
+          "70.1%"
+        ],
+        "turn_program": [
+          "2530454",
+          "5923147",
+          "add(2530454, 5923147)",
+          "5923147",
+          "add(2530454, 5923147), divide(5923147, #0)"
+        ],
+        "executed_answers": [
+          2530454.0,
+          5923147.0,
+          8453601.0,
+          5923147.0,
+          0.70067
+        ],
+        "qa_split": [
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 5,
+        "has_type2_question": false,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": true
+      }
+    },
+    {
+      "id": "Double_UPS/2009/page_33.pdf",
+      "doc": {
+        "pre_text": "( 1 ) includes shares repurchased through our publicly announced share repurchase program and shares tendered to pay the exercise price and tax withholding on employee stock options . shareowner return performance graph the following performance graph and related information shall not be deemed 201csoliciting material 201d or to be 201cfiled 201d with the securities and exchange commission , nor shall such information be incorporated by reference into any future filing under the securities act of 1933 or securities exchange act of 1934 , each as amended , except to the extent that the company specifically incorporates such information by reference into such filing . the following graph shows a five-year comparison of cumulative total shareowners 2019 returns for our class b common stock , the s&p 500 index , and the dow jones transportation average . the comparison of the total cumulative return on investment , which is the change in the quarterly stock price plus reinvested dividends for each of the quarterly periods , assumes that $ 100 was invested on december 31 , 2004 in the s&p 500 index , the dow jones transportation average , and our class b common stock . comparison of five year cumulative total return $ 40.00 $ 60.00 $ 80.00 $ 100.00 $ 120.00 $ 140.00 $ 160.00 2004 20092008200720062005 s&p 500 ups dj transport .",
+        "post_text": ".",
+        "table": {
+          "12/31/04": {
+            "united parcel service inc .": 100.0,
+            "s&p 500 index": 100.0,
+            "dow jones transportation average": 100.0
+          },
+          "12/31/05": {
+            "united parcel service inc .": 89.49,
+            "s&p 500 index": 104.91,
+            "dow jones transportation average": 111.65
+          },
+          "12/31/06": {
+            "united parcel service inc .": 91.06,
+            "s&p 500 index": 121.48,
+            "dow jones transportation average": 122.61
+          },
+          "12/31/07": {
+            "united parcel service inc .": 87.88,
+            "s&p 500 index": 128.15,
+            "dow jones transportation average": 124.35
+          },
+          "12/31/08": {
+            "united parcel service inc .": 70.48,
+            "s&p 500 index": 80.74,
+            "dow jones transportation average": 97.72
+          },
+          "12/31/09": {
+            "united parcel service inc .": 75.95,
+            "s&p 500 index": 102.11,
+            "dow jones transportation average": 115.88
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what was the fluctuation of the performance price of the ups from 2004 to 2006?",
+          "and how much does this fluctuation represent in relation to that price in 2004?",
+          "and from this year to 2009, what was the fluctuation for that stock?",
+          "what is this fluctuation as a percentage of the 2004 price?",
+          "and for the s&p 500 index price, what was the fluctuation in those five years?",
+          "and what percentage does this fluctuation represent in relation to the 2004 price of this stock?",
+          "what is, then, the difference between the ups percentage and this s&p 500 index one, for this five year period?"
+        ],
+        "conv_answers": [
+          "-8.94",
+          "-8.9%",
+          "-24.05",
+          "-24.05%",
+          "2.11",
+          "2.11%",
+          "-26.16%"
+        ],
+        "turn_program": [
+          "subtract(91.06, const_100)",
+          "subtract(91.06, const_100), divide(#0, const_100)",
+          "subtract(75.95, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100), subtract(102.11, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100), subtract(102.11, const_100), divide(#2, const_100)",
+          "subtract(75.95, const_100), divide(#0, const_100), subtract(102.11, const_100), divide(#2, const_100), subtract(#1, #3)"
+        ],
+        "executed_answers": [
+          -8.94,
+          -0.0894,
+          -24.05,
+          -0.2405,
+          2.11,
+          0.0211,
+          -0.2616
+        ],
+        "qa_split": [
+          false,
+          false,
+          true,
+          true,
+          true,
+          true,
+          true
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 7,
+        "has_type2_question": true,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": false
+      }
+    },
+    {
+      "id": "Double_ETR/2016/page_403.pdf",
+      "doc": {
+        "pre_text": "entergy new orleans , inc . and subsidiaries management 2019s financial discussion and analysis entergy new orleans 2019s receivables from the money pool were as follows as of december 31 for each of the following years. .",
+        "post_text": "see note 4 to the financial statements for a description of the money pool . entergy new orleans has a credit facility in the amount of $ 25 million scheduled to expire in november 2018 . the credit facility allows entergy new orleans to issue letters of credit against $ 10 million of the borrowing capacity of the facility . as of december 31 , 2016 , there were no cash borrowings and a $ 0.8 million letter of credit was outstanding under the facility . in addition , entergy new orleans is a party to an uncommitted letter of credit facility as a means to post collateral to support its obligations under miso . as of december 31 , 2016 , a $ 6.2 million letter of credit was outstanding under entergy new orleans 2019s letter of credit facility . see note 4 to the financial statements for additional discussion of the credit facilities . entergy new orleans obtained authorization from the ferc through october 2017 for short-term borrowings not to exceed an aggregate amount of $ 100 million at any time outstanding . see note 4 to the financial statements for further discussion of entergy new orleans 2019s short-term borrowing limits . the long-term securities issuances of entergy new orleans are limited to amounts authorized by the city council , and the current authorization extends through june 2018 . state and local rate regulation the rates that entergy new orleans charges for electricity and natural gas significantly influence its financial position , results of operations , and liquidity . entergy new orleans is regulated and the rates charged to its customers are determined in regulatory proceedings . a governmental agency , the city council , is primarily responsible for approval of the rates charged to customers . retail rates see 201calgiers asset transfer 201d below for discussion of the transfer from entergy louisiana to entergy new orleans of certain assets that serve algiers customers . in march 2013 , entergy louisiana filed a rate case for the algiers area , which is in new orleans and is regulated by the city council . entergy louisiana requested a rate increase of $ 13 million over three years , including a 10.4% ( 10.4 % ) return on common equity and a formula rate plan mechanism identical to its lpsc request . in january 2014 the city council advisors filed direct testimony recommending a rate increase of $ 5.56 million over three years , including an 8.13% ( 8.13 % ) return on common equity . in june 2014 the city council unanimously approved a settlement that includes the following : 2022 a $ 9.3 million base rate revenue increase to be phased in on a levelized basis over four years ; 2022 recovery of an additional $ 853 thousand annually through a miso recovery rider ; and 2022 the adoption of a four-year formula rate plan requiring the filing of annual evaluation reports in may of each year , commencing may 2015 , with resulting rates being implemented in october of each year . the formula rate plan includes a midpoint target authorized return on common equity of 9.95% ( 9.95 % ) with a +/- 40 basis point bandwidth . the rate increase was effective with bills rendered on and after the first billing cycle of july 2014 . additional compliance filings were made with the city council in october 2014 for approval of the form of certain rate riders , including among others , a ninemile 6 non-fuel cost recovery interim rider , allowing for contemporaneous recovery of capacity .",
+        "table": {
+          "2015": {
+            "( in thousands )": "( in thousands )",
+            "$ 14215": 15794.0
+          },
+          "2014": {
+            "( in thousands )": "( in thousands )",
+            "$ 14215": 442.0
+          },
+          "2013": {
+            "( in thousands )": "( in thousands )",
+            "$ 14215": 4737.0
+          }
+        }
+      },
+      "dialogue": {
+        "conv_questions": [
+          "what was the amount of receivables in 2016?",
+          "and what was it in 2015?",
+          "what was, then, the total amount of receivables in both years?",
+          "including 2014, what becomes this total?",
+          "and including 2013, what then becomes the total for the four years?",
+          "and concerning the city council unanimously approved settlement from june 2014, what was the percentage bandwidth of the midpoint target authorized return on common equity?",
+          "and what was that midpoint target authorized return?",
+          "what is, then, the maximum possible amount of this return?"
+        ],
+        "conv_answers": [
+          "14215",
+          "15794",
+          "30009",
+          "30451",
+          "35188",
+          "0.4",
+          "9.95",
+          "10.35"
+        ],
+        "turn_program": [
+          "14215",
+          "15794",
+          "add(14215, 15794)",
+          "add(14215, 15794), add(#0, 442)",
+          "add(14215, 15794), add(#0, 442), add(#1, 4737)",
+          "divide(40, const_100)",
+          "9.95",
+          "divide(40, const_100), add(#0, 9.95)"
+        ],
+        "executed_answers": [
+          14215.0,
+          15794.0,
+          30009.0,
+          30451.0,
+          35188.0,
+          0.4,
+          9.95,
+          10.35
+        ],
+        "qa_split": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          true,
+          true
+        ]
+      },
+      "features": {
+        "num_dialogue_turns": 8,
+        "has_type2_question": true,
+        "has_duplicate_columns": false,
+        "has_non_numeric_values": true
+      }
+    }
+  ]
+}
