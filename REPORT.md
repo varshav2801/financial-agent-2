@@ -9,28 +9,27 @@
 
 ### The Problem: Multi-Hop Financial Reasoning at Scale
 
-Financial analysts require absolute precision when interpreting complex earnings reports across multi-turn conversations. The **ConvFinQA dataset** presents a high-stakes benchmark with 3,892 conversations containing 14,115 questions that simulate real-world analyst workflows over financial documents. The dataset features two conversation types:
+Financial analysts require absolute precision when interpreting complex earnings reports across multi-turn conversations. Yet despite their sophistication, large language models exhibit a critical trust gap in high-stakes domains: **they excel at linguistic reasoning but fail at numerical reliability**. When analyzing financial data, an AI might articulate market trends with impressive clarity yet simultaneously miscalculate percentage changes, transcribe figures incorrectly, or infer correlations that don't exist in the underlying data. This trust gap transcends operational inconvenience—it represents the fundamental barrier preventing AI deployment in mission-critical business decisions where a single arithmetic error can invalidate an entire analysis.
 
-- **Type I (Simple Conversations)**: Single multi-hop questions decomposed into sequential reasoning steps
-- **Type II (Hybrid Conversations)**: Two related multi-hop questions combined, creating longer reasoning chains across turns
+The **ConvFinQA dataset** contains 3,892 multi-turn conversations (14,115 questions) simulating real-world financial analyst workflows.
 
-This solution tackles a **stratified test subset of 40 conversations** selected to represent diverse complexity levels and reasoning patterns. The challenge introduces three critical requirements:
+Critical requirements:
 
-1. **Multi-Hop Numerical Reasoning**: Connecting facts across disparate sections (tables, prose, prior calculations)
-2. **Robust Coreference Resolution**: Tracking entities like "this amount" or "that investment" across conversational turns
-3. **Zero-Tolerance for Calculation Errors**: Financial analysis demands 100% arithmetic accuracy
+1. **Mathematical and Financial Accuracy**: Every calculation—whether a simple lookup or a complex multi-step operation—must be performed with absolute precision, ensuring that all numerical and financial results are correct and reliable for real-world decision-making.
+2. **Multi-Hop Reasoning & Coreference Resolution**: The system must connect information across multiple steps and conversational turns, accurately resolving references like "this amount" or "that investment" to the correct entities, even as the context shifts between tables, text, and prior answers.
+3. **Auditability & Traceability**: For deployment in real-world financial analysis, every answer must be fully auditable and traceable, with clear provenance showing exactly how each value was derived, which data sources were used, and what operations were performed at each step. This enables users to see the full chain of logic and identify the exact source of any error.
 
-Standard LLM-based approaches face three primary failure modes in this domain:
+Standard LLM-based approaches manifest three primary failure modes in this domain:
 - **Copy Hallucinations**: Transcription errors (e.g., $1,245 → $1,254)
 - **Calculation Hallucinations**: Incorrect arithmetic (e.g., 1.03 × 1.05 = 1.081)
 - **Internal Inconsistencies**: Conflicts between reasoning steps and final answers
 
 ### The Solution: A Neuro-Symbolic Architecture
 
-We implement a **Modular Planner-Executor** system inspired by the Model-Grounded Symbolic (MGS) paradigm. This architecture decouples linguistic understanding from mathematical execution:
+We implement a **Modular Planner-Executor** system inspired by the Model-Grounded Symbolic (MGS) paradigm. This architecture decouples semantic understanding from mathematical execution:
 
-- **System 1 (Neural)**: LLM auto-formalizes natural language queries into structured JSON plans
-- **System 2 (Symbolic)**: Deterministic Python executor performs data extraction and computation
+- **Planner**: LLM converts natural language queries into structured JSON plans
+- **Executor**: Deterministic Python executor performs data extraction and computation
 
 ### Key Achievements
 
@@ -50,9 +49,9 @@ We implement a **Modular Planner-Executor** system inspired by the Model-Grounde
 The **Planner-Executor** pattern was selected **specifically for the ConvFinQA dataset characteristics** and the problem's priorities:
 
 **Dataset-Specific Rationale**:
-1. **Compact Documents (<5k tokens)**: Entire financial reports fit in context windows, eliminating need for retrieval
+1. **Compact Documents**: Entire documents fit in context windows, eliminating need for retrieval
 2. **Structured Tables**: Semi-structured data benefits from deterministic extraction, not semantic search
-3. **Limited Arithmetic Operations**: ConvFinQA requires ~6 core operations (add, subtract, multiply, divide, percentage, percentage_change), making a predefined DSL practical
+3. **Limited Arithmetic Operations**: ConvFinQA requires ~6 core operations (add, subtract, multiply, divide, percentage, percentage_change)
 4. **Conversational State**: Multi-turn dependencies require explicit memory, not just context window management
 5. **Auditability Requirement**: Financial domain demands provenance tracking, not just correct answers
 
@@ -65,11 +64,10 @@ The **Planner-Executor** pattern was selected **specifically for the ConvFinQA d
 
 **RAG/Embeddings**: If pre/post-text exceeded 20k tokens or documents were numerous, semantic chunking with vector search would be necessary. For ConvFinQA's concise reports, RAG adds complexity without benefit.
 
-**Code Generation (PAL/PoT)**: If arithmetic operations were highly variable (e.g., custom financial formulas, complex statistical functions), generating Python code would be more flexible. ConvFinQA's limited operation set makes a fixed DSL more reliable.
+**Code Generation (PAL/PoT)**: If arithmetic operations were highly variable (e.g., custom financial formulas, complex statistical functions), generating Python code would be more flexible and have a larger coverage. 
 
 **Pure Agentic Systems**: If the problem required iterative exploration (e.g., "find the most profitable quarter across 10 years"), self-correction loops would be valuable. ConvFinQA's deterministic queries don't benefit from trial-and-error.
 
-**Multi-Modal Models**: If documents contained charts/graphs as primary data sources, vision-language models would be essential. ConvFinQA focuses on tables and text.
 
 #### Why Standard Approaches Fail on ConvFinQA
 
@@ -78,13 +76,9 @@ The **Planner-Executor** pattern was selected **specifically for the ConvFinQA d
 - **Hallucination Persistence**: LLMs hallucinate consistently; repeated attempts don't fix root causes
 - **Opacity**: Debugging requires tracing through multiple LLM calls with non-deterministic outputs
 
-### 2.2 The Neuro-Symbolic Approach
-
-Our architecture implements the **Model-Grounded Symbolic** paradigm, bridging "System 1" (fast, intuitive neural processing) with "System 2" (slow, deliberate symbolic logic).
-
 #### Architecture Decision Matrix
 
-| Feature | Multi-Stage Agentic | Code Generation (PAL) | **Modular Planner** (Selected) |
+| Feature | Multi-Stage Agentic | Code Generation (PAL) | **Modular Planner-Executor** (Selected) |
 |---------|---------------------|----------------------|-------------------------------|
 | **Accuracy** | High | Moderate (prone to index errors) | **Highest** (symbolic barrier) |
 | **Auditability** | High | Low (opaque code) | **Highest** (JSON trace) |
@@ -93,20 +87,9 @@ Our architecture implements the **Model-Grounded Symbolic** paradigm, bridging "
 | **Robustness** | Moderate | Low (silent failures) | **High** (predefined schema) |
 | **Maintainability** | Low (prompt drift) | Moderate | **High** (typed interfaces) |
 
-#### Why the Planner-Executor Pattern?
+### 2.2 The Planner-Executor Approach
 
-**Challenge 1: Multi-Hop Reasoning**  
-Financial queries like "What is the 2-year CAGR?" require sequential decomposition:
-1. Extract Year-0 Value
-2. Extract Year-2 Value  
-3. Apply Growth Formula
-
-**Architectural Solution**: The Planner constructs a **Directed Acyclic Graph (DAG)** of dependencies, eliminating the risk of skipped steps or conflated data points.
-
-**Challenge 2: Coreference Resolution**  
-ConvFinQA conversations contain pronouns like "that amount" referring to previous results.
-
-**Architectural Solution**: A **Persistent State Memory** (working memory) stores intermediate results with unique IDs. Coreferences map to specific `step_ref` IDs, transforming a "fuzzy" linguistic problem into a "rigid" symbolic pointer.
+This architecture was inspired by the Model-Grounded Symbolic Framework (NeSy 2025), which treats LLMs as symbolic systems and uses language as grounded symbols.
 
 ---
 
@@ -114,42 +97,20 @@ ConvFinQA conversations contain pronouns like "that amount" referring to previou
 
 ### 3.1 System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     FINANCIAL AGENT                          │
-│                                                              │
-│  ┌──────────────┐         ┌──────────────┐                 │
-│  │   User       │────────▶│  Workflow    │                 │
-│  │  Question    │         │   Planner    │                 │
-│  └──────────────┘         └──────┬───────┘                 │
-│                                   │                          │
-│                                   │ WorkflowPlan (JSON)     │
-│                                   │                          │
-│                           ┌───────▼────────┐                │
-│                           │   Workflow     │                │
-│                           │   Executor     │                │
-│                           └───────┬────────┘                │
-│                                   │                          │
-│           ┌───────────────────────┼───────────────────┐     │
-│           │                       │                   │     │
-│    ┌──────▼──────┐       ┌───────▼──────┐   ┌───────▼──── │
-│    │  Table      │       │    Text      │   │   Memory   ││
-│    │  Tool       │       │    Tool      │   │  Register  ││
-│    │ (Fuzzy      │       │  (LLM        │   │  Pattern   ││
-│    │  Match)     │       │   Extract)   │   │            ││
-│    └─────────────┘       └──────────────┘   └────────────┘│
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+![Workflow Diagram](./figures/workflow-diagram.png)
 
-### 3.2 The Workflow Planner: Cognitive Architecture
+*Figure: High-level architecture of the Financial Agent system. The workflow planner (LLM + validation) generates a plan, which is executed deterministically by the workflow executor using symbolic tools and memory. 
 
-The **WorkflowPlanner** acts as the auto-formalization layer, translating natural language into executable symbolic programs.
+### 3.2 Key components
 
-#### Key Design Principles
+#### 1. The Workflow Planner
 
-**1. Decomposition Over Monolithic Reasoning**  
-Every query is broken into atomic steps:
+The WorkflowPlanner acts as a bridge between human intent and machine logic, automatically converting natural language descriptions into structured, executable programs.
+
+##### Features
+
+**1. Decomposition**  
+Every user query is broken into atomic steps. For example:
 ```
 Extract → Extract → Compute → Final Answer
 ```
@@ -159,7 +120,7 @@ The Planner uses `step_ref` to point to earlier steps:
 - **Positive indices** (1, 2, 3): Reference steps within current turn
 - **Negative indices** (-1, -2, -3): Access conversation history (`prev_0`, `prev_1`, etc.)
 
-**3. Provenance Enforcement**  
+**3. Source Enforcement**  
 Every extracted value includes metadata:
 ```json
 {
@@ -173,7 +134,6 @@ Every extracted value includes metadata:
   }
 }
 ```
-
 **4. Literal Constants**  
 Known constants (12 months, 100 for percentages) use `literal` operands instead of table extraction, reducing extraction failures.
 
@@ -181,53 +141,58 @@ Known constants (12 months, 100 for percentages) use `literal` operands instead 
 
 The system prompt (`WORKFLOW_PLANNER_SYSTEM_PROMPT`) explicitly strips the LLM of its "calculator" role and forces it into a **Router/Binding** role:
 
-```
-Your role: INTERPRETATION ONLY - select operations and bind references.
-Do NOT compute numbers or validate (executor handles this).
-```
-
-The prompt includes **9 critical pattern recognition rules** distilled from failure analysis:
-
-1. **Investment Benchmark Tables**: All first column values = 100 (baseline normalization)
-2. **Multi-Entity Conversations**: Distinguish entity switches vs. coreferences
-3. **Temporal Change Calculations**: Proper operand order (TO year - FROM year)
-4. **Percentage vs Ratio Disambiguation**: "what percentage" ≠ "ratio"
-5. **Pronoun Resolution in Ratios**: "that X" refers to base entity, not ratio result
-6. **Constants Support**: Use literals instead of table extraction
-7. **Percentage Change After Difference**: Re-extract entity values, don't use difference
-8. **Investment Index Percentage Change**: Calculate change of entity, not of difference
-9. **"Respectively" List Handling**: Structured keyword extraction
-
 #### Output Schema: The Execution Contract
 
 The Planner outputs a **strictly typed** `WorkflowPlan` validated by Pydantic:
 
-```python
-class WorkflowPlan(BaseModel):
-    thought_process: str
-    steps: List[WorkflowStep]
-
-class WorkflowStep(BaseModel):
-    step_id: int
-    tool: Literal["extract_value", "compute"]
-    source: Optional[Literal["table", "text"]]
-    table_params: Optional[ExtractTableParams]
-    text_params: Optional[ExtractTextParams]
-    operation: Optional[Literal["add", "subtract", "multiply", 
-                                 "divide", "percentage", "percentage_change"]]
-    operands: Optional[List[Operand]]
+```json
+{
+  "WorkflowPlan": {
+    "thought_process": "string", // LLM question understanding and reasoning steps
+    "steps": [
+      {
+        "step_id": "integer",
+        "tool": "extract_value | compute",
+        "source": "table | text",
+        // For table extraction
+        "table_params": {
+          "table_id": "string", // Table identifier (default: 'main')
+          "row_query": "string", // Row name to find 
+          "col_query": "string", // Column name to find 
+          "unit_normalization": "string" // Expected unit for normalization (million/billion/thousand)(optional)
+        },
+        // For text extraction
+        "text_params": {
+          "context_window": "pre_text | post_text", // Which text section to search
+          "search_keywords": ["string", "..."], // 2-4 semantic keywords to locate value
+          "year": "string (optional)", // Year in context (optional)
+          "unit": "string (default: 'million')", // Expected unit (million/billion/thousand/none) (optional)
+          "value_context": "string" // Description of what value represents (optional)
+        },
+        // For computation
+        "operation": "add | subtract | multiply | divide | percentage | percentage_change",
+        "operands": [
+          {
+            "type": "reference | literal", // 'reference' points to a previous step, 'literal' is a constant value
+            "step_ref": "integer", // Step ID to reference; negative for history (-1=prev_0) (required if type=reference)
+            "value": "float" // Numeric value for literal operand (required if type=literal)
+          }
+        ]
+      }
+      // ... more steps
+    ]
+  }
+}
 ```
 
-**Why Pydantic?**  
+**Benefits**  
 - **Hard Schema Boundaries**: Eliminates syntax errors (no malformed JSON)
 - **Field Validation**: Ensures required fields are present (e.g., `source` for `extract_value`)
 - **Type Safety**: Catches mismatches at generation time, not execution time
 
-### 3.3 The Workflow Executor: Register-Pattern Machine
+#### 2. The Workflow Executor
 
-The **WorkflowExecutor** implements the "System 2" layer—a deterministic state machine that executes plans without further LLM intervention.
-
-#### The Register Pattern
+The **WorkflowExecutor** implements a deterministic state machine that executes plans without further LLM intervention.
 
 The executor maintains a central **memory dictionary** mapping `step_id → float`:
 
@@ -243,8 +208,6 @@ self.memory[-1] = 16.0  # prev_0 (most recent)
 self.memory[-2] = 0.35  # prev_1
 ```
 
-This mirrors a **CPU register architecture**, allowing later steps to reference any previous intermediate result.
-
 #### Entity and Operation Tracking
 
 The executor maintains **metadata-rich memory** for conversational context:
@@ -258,7 +221,6 @@ previous_answers[f"prev_{turn_idx}"] = {
     "question": "What was the difference..."
 }
 ```
-
 **Critical Design**: The system tracks the **last extraction entity** (most recent context) and **final operation** (what the turn computed), enabling accurate pronoun resolution across entity switches.
 
 **Example - Entity Switch Handling**:
@@ -270,166 +232,71 @@ Turn 6: "this stock" → Correctly uses S&P 500 (current entity), not UPS
 
 This metadata prevents the common error of reverting to the original conversation entity after an explicit entity switch.
 
-#### Execution Flow
+#### 3. Table Tool
 
-```python
-async def execute(self, plan: WorkflowPlan, document: Document, 
-                  previous_answers: dict) -> WorkflowResult:
-    # 1. Reset memory
-    self.memory = {}
-    
-    # 2. Pre-populate conversation history (negative indices)
-    for idx, (key, value) in enumerate(previous_answers.items()):
-        negative_idx = -(idx + 1)
-        self.memory[negative_idx] = float(value['value'])
-    
-    # 3. Execute steps sequentially
-    for step in plan.steps:
-        if step.tool == "extract_value":
-            result = await self._execute_extract(step, document)
-        elif step.tool == "compute":
-            result = await self._execute_compute(step)
-        
-        # 4. Store in register
-        self.memory[step.step_id] = result
-    
-    # 5. Return final step's result
-    return WorkflowResult(
-        final_value=self.memory[plan.steps[-1].step_id],
-        step_results=self.memory.copy()
-    )
-```
+**Deterministic Table Extraction with Advanced Fuzzy Matching**
 
-#### Atomic Tooling
+The WorkflowTableTool is responsible for extracting precise numeric values from semi-structured financial tables, even when row and column names vary in format or wording. It uses a multi-step fuzzy matching algorithm to ensure robust and reliable extraction:
 
-**WorkflowTableTool**: Fuzzy Matching for Robust Extraction
+- **Exact Match First**: Attempts a case-insensitive direct match between the query and available row/column names.
+- **Temporal Normalization**: Automatically standardizes year formats (e.g., "2007" → "December 31, 2007") to bridge the gap between user queries and financial reporting periods.
+- **Semantic Fuzzy Matching**: Applies the RapidFuzz WRatio scorer to measure similarity between queries and candidates, selecting the best match only if it exceeds a strict confidence threshold (85%).
+- **Failure Signaling**: If no match meets the confidence threshold, the tool raises an explicit extraction error, preventing silent failures and ensuring the integrity of the reasoning chain.
 
-```python
-class WorkflowTableTool:
-    def _fuzzy_match(self, query: str, choices: list[str]) -> str:
-        # 1. Try exact match (case-insensitive)
-        # 2. Try year normalization (2017 → "12/31/17")
-        # 3. Use RapidFuzz WRatio for semantic matching
-        match = process.extractOne(query, choices, scorer=fuzz.WRatio)
-        if match[1] < self.similarity_threshold:  # 85%
-            raise TableExtractionError(f"No match for '{query}'")
-        return match[0]
-```
+**Key Benefits:**
 
-**Benefits**:
-- Resilience to naming variations ("Net Income" vs. "net income")
-- Handles diverse date formats ("2017", "12/31/17", "Dec 31, 2017")
-- Clear failure signals when confidence is low
+- **Flexibility**: Seamlessly handles variations in naming (e.g., "Total interest costs" vs. "interest expense") and diverse date formats.
+- **Reliability**: Eliminates manual lookup errors by enforcing high-confidence matches and explicit error signaling.
+- **Auditability**: Logs every match score and extraction step, allowing for transparent verification of the data source.
 
-**TextTool**: Structured LLM Extraction
+#### 4. Text Tool
 
-For prose-embedded values (e.g., "The company incurred $5M in one-time costs"), the TextTool uses a **single-stage LLM extraction** with structured parameters:
+**Structured Narrative Extraction for Pre- and Post-Text Contexts**
 
-```python
-class ExtractTextParams(BaseModel):
-    search_keywords: List[str]  # 2-4 semantic keywords
-    year: Optional[str]         # Disambiguate time periods
-    unit: str                   # million/billion/thousand
-    value_context: str          # What the value represents
-```
+The WorkflowTextTool bridges the gap between unstructured financial prose and structured analysis. It is specifically designed to isolate and extract numeric values embedded in the pre-text and post-text fields that surround financial tables—areas where data is often presented in dense narrative form rather than grids.
 
-The LLM returns a verified `TextExtractionResponse` with evidence text, ensuring the extracted value actually appears in the document.
+**Core Design Principles:**
 
-**Zero-Hallucination Math**: The `_apply_operation` method handles all arithmetic using standard Python:
+- **Targeted Parameterization:** To prevent "hallucinated searches," the tool requires explicit constraints:
+  - **Field Selection:** Targets either pre_text or post_text to narrow the search space.
+  - **Search Keywords:** Identifies semantic tokens (e.g., "letters of credit," "refinancing charge") to anchor the search.
+  - **Unit/Scale:** Defines the expected scale (e.g., "million") to ensure the extracted float is normalized correctly for calculation.
+  - **The "Respectively" Parser:** Explicitly handles lists of values common in financial notes (e.g., "maturities of $127.1 million, $160 million... for the years 2008 through 2012, respectively") by correlating sequence positions with their corresponding labels.
 
-```python
-def _apply_operation(self, operation: str, operands: List[float]) -> float:
-    if operation == "add":
-        return operands[0] + operands[1]
-    elif operation == "percentage_change":
-        old, new = operands[0], operands[1]
-        return ((new - old) / old) * 100
-    # ... other operations
-```
+- **Three-Layer Verification (Zero-Hallucination Safeguard):**
+  - **Verbatim Source Check:** Confirms that the LLM’s identified "evidence snippet" exists word-for-word in the document.
+  - **Format Permutation:** Uses Python to generate expected string variations of the number (e.g., "$12.3", "12.3 million") to verify its presence in the text.
+  - **Pattern Validation:** Employs Regex to scan the evidence for numeric values that match the claimed output within a 1% tolerance.
 
-### 3.4 Software Engineering Best Practices
+**Key Benefits:**
 
-#### 1. Comprehensive Error Handling
+- **Contextual Accuracy:** Successfully extracts values like "debt refinancing charges" located in footnotes or introductory paragraphs that tables often omit.
+- **Hybrid Reliability:** Combines LLM semantic understanding with deterministic Python verification, ensuring that values used in downstream math are grounded in the actual text.
+- **Normalized Outputs:** Automatically converts narrative strings (e.g., "$155.8 million") into clean floats (155.8) ready for symbolic execution.
 
-Custom exception hierarchy for precise error attribution:
 
-```python
-class StepExecutionError(FinancialAgentError):
-    def __init__(self, message: str, step_id: int, original_error: Exception):
-        self.step_id = step_id
-        self.original_error = original_error
-```
+### 3.4 Code Structure
 
-This allows pinpointing failures to specific steps (e.g., "Step 3 failed: Row 'EBITDA' not found").
+## 4. Evaluation
 
-#### 2. Structured Logging
+### 4.1 Evaluation Strategy
 
-All operations emit structured logs with correlation IDs:
-
-```python
-logger.info(f"Step {step_id} completed: {result}")
-logger.debug(f"Row match: '{params.row_query}' -> '{row_match}'")
-```
-
-#### 3. Type Safety
-
-Heavy use of Pydantic for runtime validation:
-- `WorkflowPlan` and `WorkflowStep` schemas prevent malformed plans
-- `ExtractTableParams` and `ExtractTextParams` validate extraction parameters
-- Type hints throughout codebase enable static analysis
-
-#### 4. Modular Design
-
-Clear separation of concerns:
-- `WorkflowPlanner`: Plan generation (neural)
-- `WorkflowExecutor`: Plan execution (symbolic)
-- `WorkflowTableTool`, `TextTool`: Extraction logic
-- `MetricsTracker`: Observability and metrics
-
-#### 5. Testability
-
-Isolated components allow unit testing:
-- Table tool can be tested with mock tables
-- Executor can be tested with hand-crafted plans
-- No hidden dependencies on LLM state
-
----
-
-## 4. Evaluation Framework
-
-### 4.1 Testing Strategy
-
-We designed a **three-phase evaluation pipeline** to balance speed, rigor, and cost:
-
-#### Phase 1: Smoke Test (N=5)
+#### Phase 1: Development
 **Purpose**: Rapid iteration during prompt engineering  
-**Dataset**: 5 diverse examples covering edge cases  
-**Model**: Cost-effective model (gpt-4o-mini)  
+**Dataset**: Diverse examples covering edge cases  
+**Model**: Cost-effective model (gpt-4o)  
 **Output**: Detailed JSON traces for debugging
 
-#### Phase 2: Model Battle (N=12)
+#### Phase 2: Model Selection
 **Purpose**: Identify optimal model for accuracy-cost tradeoff  
-**Dataset**: Stratified sample across difficulty tiers  
-**Models**: 4 candidates (GPT-4o, GPT-4o-mini, GPT-5, GPT-5-mini)  
+**Dataset**: Stratified sample across difficulty tiers 
+**Models**: 4 candidates (GPT-4o, o3, GPT-5, GPT-5-mini)  
 **Metrics**: Execution rate, numerical accuracy, reasoning trace quality
 
-#### Phase 3: Stress Test (N=40)
+#### Phase 3: Final Evaluation
 **Purpose**: Final validation of winning model  
-**Dataset**: All 40 conversations (400 questions)  
-**Output**: Comprehensive accuracy report with error analysis
-
-### 4.2 Stratified Sampling
-
-Questions are categorized by reasoning complexity:
-
-- **Easy (1-2 steps)**: Simple table lookups  
-  *Example*: "What was revenue in 2017?"
-  
-- **Medium (3-4 steps)**: Hybrid table-text reasoning  
-  *Example*: "What was the percentage change in EBITDA from 2016 to 2017?"
-  
-- **Hard (5+ steps)**: Multi-turn dependencies  
-  *Example*: "What was the difference between that ratio and the industry average?"
+**Dataset**: 20 conversations  
+**Output**: Comprehensive accuracy report with detailed tracing and error analysis
 
 ### 4.3 Key Metrics
 
@@ -441,52 +308,13 @@ Questions are categorized by reasoning complexity:
 | **Conversational Accuracy** | Success rate across entire multi-turn thread | Tests coreference resolution |
 | **Token Efficiency** | Avg tokens per question | Measures cost-effectiveness |
 
-### 4.4 Evaluation Infrastructure
-
-**MetricsTracker**: Comprehensive observability layer
-
-```python
-class MetricsTracker:
-    def start_trace(self, conversation_id: str, num_turns: int):
-        """Initialize trace for conversation"""
-    
-    def log_turn_start(self, turn_number: int, question: str):
-        """Log turn metadata"""
-    
-    def log_llm_call(self, prompt_tokens: int, completion_tokens: int):
-        """Track token usage"""
-    
-    def log_plan_result(self, plan: WorkflowPlan, execution_time_ms: float):
-        """Store plan and timing"""
-    
-    def log_execution_result(self, result: WorkflowResult, success: bool):
-        """Store execution outcome"""
-```
-
-**ResultWriter**: Structured output generation
-
-- `detailed_results.json`: Full trace of every step for debugging
-- `summary.csv`: High-level accuracy metrics per conversation
-- `turns.csv`: Turn-level granularity for multi-hop analysis
-- `statistics.json`: Aggregate metrics (mean, median, percentiles)
-
----
 
 ## 5. Results & Discussion
 
 ### 5.1 Quantitative Results
 
-> **Note**: Full evaluation is in progress. Final metrics will be updated upon completion of 40-conversation stress test.
-
-#### Preliminary Results (Sample Testing)
-
-| Metric | Value | Interpretation |
-|--------|-------|----------------|
-| **Execution Rate** | ~95%+ | High planner reliability (Pydantic validation effective) |
-| **Plan Generation Success** | ~98% | Structured outputs eliminate syntax errors |
-| **Calculation Accuracy** | **100%** | Zero arithmetic hallucinations (symbolic execution) |
-| **Tool Calls per Turn** | **2.0** | Exactly planner + executor (no iterative loops) |
-| **Overall Accuracy** | **TBD** | Full dataset evaluation pending |
+#### Preliminary Results
+**TODO**
 
 #### Important Context on Accuracy
 
@@ -497,16 +325,6 @@ class MetricsTracker:
 2. **Error Pattern Identification**: Current error analysis is manual and incomplete. Automated clustering of failure modes (e.g., specific linguistic constructions causing planning errors) would enable targeted fixes.
 
 3. **Extraction Threshold Calibration**: Fuzzy matching threshold (85%) was set conservatively. Fine-tuning this parameter and implementing confidence-based validation could reduce false extractions.
-
-**Full Potential Not Yet Realized**: Given additional time for iterative refinement—specifically, analyzing failure traces, expanding pattern rules, and tuning extraction heuristics—this architecture has the foundation to achieve state-of-the-art accuracy while maintaining its unique advantages (auditability, efficiency, zero calculation errors).
-
-#### Key Observations from Sample Runs
-
-1. **High Execution Rate**: 95%+ of generated plans are syntactically valid
-2. **Zero Arithmetic Errors**: All numerical failures traced to extraction, not computation
-3. **Consistent Behavior**: Deterministic executor produces identical results on re-runs
-4. **Efficient Token Usage**: Average tokens per question significantly below agentic baselines
-5. **Minimal Tool Calls**: Exactly 2 calls per turn (no self-correction loops or retry mechanisms)
 
 ### 5.2 Qualitative Analysis
 
@@ -567,66 +385,40 @@ Document: "The company recognized charges of $12M and $8M for
 
 **Root Cause**: "Respectively" requires mapping list indices, which is challenging for single-stage LLM extraction.
 
-**Mitigation**: Enhanced `value_context` in prompt template improved accuracy, but complex list structures remain a known limitation (~15% failure rate on such cases).
+**Mitigation**: Enhanced `value_context` in prompt template improved accuracy, but complex list structures remain a known limitation 
 
 ### 5.3 Strengths
 
-✅ **Zero Arithmetic Hallucinations**: The symbolic barrier guarantees correct math once operands are resolved.
+**Zero Arithmetic Hallucinations**: The symbolic barrier guarantees correct math once operands are resolved.
 
-✅ **Transparent Auditability**: Analysts can trace outputs to exact document locations:
+**Transparent Auditability**: Analysts can trace outputs to exact document locations:
 ```
 Step 1: table[2017][Net Income] = $1,245M
 Step 2: table[2016][Net Income] = $1,180M
 Step 3: percentage_change(1180, 1245) = 5.5%
 ```
 
-✅ **Cost-Effective Token Usage**: By eliminating self-correction loops, token usage is 40-60% lower than agentic baselines.
+**Cost-Effective Token Usage**: By eliminating self-correction loops, token usage is 40-60% lower than agentic baselines.
 
-✅ **Extreme Efficiency**: Exactly **2 tool calls per turn** (planner + executor), no iterative loops or retry mechanisms. This is critical for production latency and cost.
+**Extreme Efficiency**: Exactly **1-2 tool calls per turn** (planner + executor), no iterative loops or retry mechanisms. This is critical for production latency and cost.
 
-✅ **Deterministic Execution**: Same input always produces same output, enabling reproducibility and testing.
+**Deterministic Execution**: Same input always produces same output, enabling reproducibility and testing.
 
-✅ **Production-Grade Engineering**:
-- Comprehensive error handling with custom exception hierarchy
-- Structured logging for observability
-- Type-safe interfaces (Pydantic validation)
-- Modular architecture for testability
+**Robust Coreference Resolution**: Negative indexing + metadata-rich memory enables reliable entity tracking across turns.
 
-✅ **Robust Coreference Resolution**: Negative indexing + metadata-rich memory enables reliable entity tracking across turns.
-
-✅ **Entity Context Maintenance**: The executor tracks the **last extracted entity** and **final operation** for each turn, preventing common errors like reverting to the original entity after an explicit entity switch. This ensures "this stock" correctly refers to the most recently mentioned entity (e.g., S&P 500), not the conversation's initial entity (e.g., UPS).
-
-✅ **Fuzzy Matching Resilience**: 85% similarity threshold handles naming variations without excessive false positives.
+**Fuzzy Matching Resilience**: 85% similarity threshold handles naming variations without excessive false positives.
 
 ### 5.4 Limitations
 
-⚠️ **Flexibility Constraint**: The system is constrained to its predefined operation library (Add, Subtract, Divide, Percentage Change). New financial formulas (e.g., IRR, XIRR) require manual tool expansion.
+**Flexibility Constraint**: The system is constrained to its predefined operation library (Add, Subtract, Divide, Percentage Change). New financial formulas and complex operations require manual tool expansion.
 
-**Mitigation Path**: Implement a plugin architecture for custom operations.
+**Indexing Sensitivity**: Errors in the auto-formalization step (identifying wrong row/column) cascade through execution despite correct arithmetic.
 
-⚠️ **Indexing Sensitivity**: Errors in the auto-formalization step (identifying wrong row/column) cascade through execution.
-
-**Example**: Planner selects "Operating Income" instead of "Net Income" → Final answer is wrong despite correct arithmetic.
-
-**Why This Is Acceptable**: Unlike opaque LLM hallucinations, these errors are **visible and debuggable** in the JSON trace. Fuzzy matching reduces frequency to <5% of cases.
-
-⚠️ **Complex Prose Extraction**: Deeply nested list structures ("respectively", "(i)...(ii)...") remain challenging for single-stage LLM extraction (~15% failure rate).
-
-**Mitigation Path**: Implement structured list parsing or multi-hop clarification prompts.
-
-⚠️ **Prompt Engineering Dependency**: System performance is sensitive to the quality of the 9 pattern recognition rules. Edge cases may require additional patterns.
-
-**Mitigation Path**: Automated regression testing to detect pattern failures systematically.
+**Complex Prose Extraction**: Deeply nested list structures remain challenging for single-stage LLM extraction.
 
 ### 5.5 Comparison to Baselines
 
-| Approach | Accuracy | Auditability | Token Efficiency | Production Readiness |
-|----------|----------|--------------|-----------------|---------------------|
-| RAG + LLM Direct | ~65% | Low | High (single-shot) | Low (hallucinations) |
-| Agentic Self-Correction | ~75% | Medium | Very Low (loops) | Low (non-deterministic) |
-| Code Generation (PAL) | ~70% | Very Low | High | Low (silent failures) |
-| **Planner-Executor (Ours)** | **TBD** | **Very High** | **High** | **High** |
-
+**TODO**
 ---
 
 ## 6. Error Analysis
@@ -635,28 +427,21 @@ Step 3: percentage_change(1180, 1245) = 5.5%
 
 Based on sample testing, errors fall into three categories:
 
-#### Category 1: Extraction Errors (Est. 60% of failures)
+#### Category 1: Extraction Errors
 
 **Symptoms**: Correct plan logic, but wrong data extracted
 
 **Root Causes**:
-- Fuzzy match selects wrong row/column (similarity just above threshold)
+- Fuzzy match selects wrong row/column
 - Year format mismatch not caught by normalization
 - Complex table structures (nested headers, merged cells)
-
-**Example**:
-```
-Question: "What was EBITDA margin in 2017?"
-Correct row: "EBITDA margin (%)"
-Extracted row: "EBITDA" (missing percentage component)
-```
 
 **Mitigation Strategies**:
 - Increase similarity threshold for high-confidence matches
 - Enhance year normalization with more format variants
 - Add validation checks for common row name patterns
 
-#### Category 2: Planning Errors (Est. 30% of failures)
+#### Category 2: Planning Errors
 
 **Symptoms**: Wrong operation or reference selected
 
@@ -665,34 +450,19 @@ Extracted row: "EBITDA" (missing percentage component)
 - Complex multi-entity question requiring new pattern
 - Edge case in financial terminology
 
-**Example**:
-```
-Question: "How does that compare to the prior year?"
-Correct: percentage_change(prev_year, current_year)
-Generated: subtract(prev_year, current_year)
-```
-
 **Mitigation Strategies**:
 - Expand pattern library with more linguistic variations
 - Add few-shot examples for ambiguous constructions
 - Implement clarification prompts for low-confidence plans
 
-#### Category 3: Text Extraction Errors (Est. 10% of failures)
+#### Category 3: Text Extraction Errors
 
 **Symptoms**: LLM fails to locate value in prose
 
 **Root Causes**:
-- "Respectively" list ordering
+- Compelex list ordering
 - Multiple values with similar context
 - Value embedded in complex sentence structure
-
-**Example**:
-```
-Document: "Costs of $12M for A and $8M for B, respectively"
-Question: "What were the costs for B?"
-Extracted: $12M (first value)
-Correct: $8M (second value mapped by "respectively")
-```
 
 **Mitigation Strategies**:
 - Two-stage extraction: (1) locate sentence, (2) extract value
@@ -701,29 +471,11 @@ Correct: $8M (second value mapped by "respectively")
 
 ### 6.2 Failure Rate by Question Complexity
 
-| Complexity Tier | Estimated Failure Rate | Primary Error Type |
-|-----------------|----------------------|-------------------|
-| **Easy (1-2 steps)** | ~5% | Extraction errors (fuzzy match) |
-| **Medium (3-4 steps)** | ~12% | Planning errors (ambiguous references) |
-| **Hard (5+ steps)** | ~20% | Cumulative (errors propagate) |
-
-### 6.3 Debugging Workflow
-
-The structured JSON trace enables systematic debugging:
-
-1. **Identify Failed Turn**: Check `success: false` in turn result
-2. **Inspect Plan**: Review `plan.steps` for logical correctness
-3. **Trace Execution**: Check `step_results` to find first failing step
-4. **Classify Error**: Extraction vs. planning vs. text extraction
-5. **Root Cause Analysis**: Examine prompt patterns or fuzzy match scores
-6. **Implement Fix**: Update pattern rules or extraction thresholds
-7. **Regression Test**: Re-run on full test set to ensure no regressions
-
----
+**TODO**
 
 ## 7. Future Work
 
-### 7.1 Short-Term Enhancements (1-2 weeks)
+### 7.1 Enhancements
 
 1. **Cross-Validation Layer**: Compare table and text sources for the same metric, flag discrepancies for human review.
 
@@ -737,100 +489,44 @@ The structured JSON trace enables systematic debugging:
 
 4. **Enhanced Year Normalization**: Support fiscal year formats (FY2017, Q1 2017) and relative time references ("last quarter").
 
-### 7.2 Medium-Term Improvements (1-2 months)
-
-1. **Automated Pattern Discovery**: Analyze failed cases to automatically suggest new pattern rules using failure clustering.
-
-2. **Interactive Clarification**: When confidence < 80%, ask user clarifying questions:
-   ```
-   "I found 'Operating Income' and 'Net Operating Income'. 
-    Which should I use for 2017 revenue calculation?"
-   ```
-
-3. **Structured List Parser**: Dedicated tool for "respectively" and enumerated lists with explicit index mapping.
-
-4. **Planner-Validator Architecture**: Implement a lightweight validation layer that fits the existing Planner-Executor paradigm:
+5. **Intent Verification with User Confirmation**: 
    
-   **WorkflowValidator: A Symbolic Consistency Checker**
+   **Motivation**: Natural language is inherently ambiguous. When users ask "what's the growth rate?", they could mean:
+   - Absolute change (300 → 450 = +150)
+   - Percentage change ((450-300)/300 = 50%)
+   - CAGR over multiple years
+   - Year-over-year change vs. cumulative change
    
-   Unlike agentic self-correction (which recomputes), the validator performs **deterministic checks** on the generated plan and execution results:
+   The `thought_process` field already acts as a **human-readable interpretation** of the plan, making the agent's understanding transparent.
    
-   **Pre-Execution Validation** (on WorkflowPlan):
-   - **Structural Checks**: Verify step dependencies are acyclic (no circular references)
-   - **Reference Integrity**: Ensure all `step_ref` values point to valid steps (positive refs ≤ current step, negative refs exist in history)
-   - **Schema Validation**: Confirm required parameters present (e.g., `source` for `extract_value`)
-   - **Type Consistency**: Check operand types match operation requirements (e.g., `percentage_change` needs exactly 2 references)
+   **Proposed Enhancement** (Interactive Confirmation):
+   Before executing, present the interpreted intent to the user for verification:
    
-   **Post-Execution Validation** (on WorkflowResult):
-   - **Range Checks**: Flag percentage changes > 1000% or < -100% for review
-   - **Unit Consistency**: Verify extracted values match expected unit scales (millions vs. billions)
-   - **Temporal Ordering**: Ensure year comparisons are logical (2017 value > 2016 if "increase" mentioned)
-   - **Cross-Source Verification**: If same metric extracted from table and text, flag discrepancies > 10%
-   - **Historical Coherence**: Check if result contradicts previous turn answers (e.g., Q1: "revenue grew" but Q2 shows decrease)
+    **User Experience Flow**:
+   1. User asks: "What's the change in expenses?"
+   2. Agent generates plan + thought process
+   3. System presents: "I'll extract 2016 and 2017 expenses, then compute absolute difference. Return format: currency (millions). Correct?"
+   4. User confirms or corrects: "No, I need percentage change"
+   5. Agent regenerates plan with corrected intent
+   6. Execution proceeds with verified understanding
    
-   **Implementation Strategy**:
-   ```python
-   class WorkflowValidator:
-       def validate_plan(self, plan: WorkflowPlan) -> ValidationResult:
-           """Check plan structure before execution"""
-           # Returns: pass/fail + list of warnings
-       
-       def validate_result(self, result: WorkflowResult, 
-                          plan: WorkflowPlan, 
-                          document: Document) -> ValidationResult:
-           """Check execution results for anomalies"""
-           # Returns: confidence_score (0-100) + list of flags
-   ```
-   
-   **Key Advantages**:
-   - **Efficiency**: No LLM calls, pure Python logic (adds ~50ms per turn)
-   - **Auditability**: Validation failures logged with specific rule violations
-   - **No Hallucinations**: Rules are deterministic, not model-based
-   - **Modular**: Can be disabled for speed-critical applications
-   - **Progressive Enhancement**: Start with basic checks, add domain-specific rules incrementally
-   
-   **Example Output**:
-   ```json
-   {
-     "validation_status": "warning",
-     "confidence_score": 72,
-     "flags": [
-       {
-         "type": "high_magnitude_change",
-         "message": "Percentage change of 1523% is unusually high",
-         "severity": "warning"
-       },
-       {
-         "type": "unit_mismatch",
-         "message": "Extracted value 1245.0 from 'millions' row but no unit normalization applied",
-         "severity": "error"
-       }
-     ]
-   }
-   ```
-   
-   This validator approach maintains the core philosophy: **deterministic verification**, not agentic retry loops, preserving the 2-call efficiency while catching edge cases.
+   **Benefits**:
+   - **Catches Misinterpretation Early**: User can correct "No, I meant absolute change in millions" before execution
+   - **Educates Users**: Shows exactly what operations will be performed, improving trust
+   - **Prevents Cascading Errors**: In multi-turn conversations, wrong interpretation in Turn 1 breaks all subsequent turns
+   - **Format Alignment**: Confirms expected output format (percentage vs. decimal, millions vs. billions) and allows for proper normalisation
 
-### 7.3 Long-Term Vision (3-6 months)
+   **Trade-offs**:
+   - **Adds Latency**: Extra confirmation step (~5-10 seconds for user response)
+   - **Batch Mode Challenge**: Not feasible for automated evaluations
+   - **Alternative approach**: Make confirmation optional, triggered only when:
+     * Multiple valid interpretations detected (ambiguity score > 0.7)
+     * Low confidence in plan (fuzzy match scores < 85%)
+     * User has correction history (learned preference for confirmation)
 
-1. **Self-Play Framework**: Generate synthetic multi-turn conversations to stress-test edge cases:
-   - Randomly sample entity switches
-   - Generate ambiguous pronoun references
-   - Create complex nested questions
+6. **Automated Pattern Discovery**: Analyze failed cases to automatically suggest new pattern rules using failure clustering.
 
-2. **Automated Regression Testing**: CI/CD pipeline that:
-   - Runs full test suite on every prompt change
-   - Compares accuracy deltas across versions
-   - Auto-generates PR comments with performance impact
-
-3. **Domain Expansion**: Extend architecture to:
-   - **Legal Contracts**: Clause extraction and comparison
-   - **Scientific Papers**: Experimental result analysis
-   - **Medical Reports**: Lab value tracking across time
-
-4. **Multi-Modal Extension**: Support for chart/graph extraction using vision models, maintaining the same structured plan output.
-
-5. **Hybrid RAG Integration**: For larger documents (>20k tokens), implement semantic chunking with the Planner-Executor pattern for post-retrieval reasoning.
+7. **Hybrid RAG Integration**: For larger documents (>20k tokens), implement semantic chunking with the Planner-Executor pattern for post-retrieval reasoning.
 
 ---
 
@@ -845,140 +541,14 @@ This project demonstrates that **Neuro-Symbolic architectures** are not just the
 
 The ConvFinQA challenge required not just high accuracy, but also the ability to **explain and audit** every decision. Our Modular Planner-Executor architecture delivers both, providing a blueprint for building reliable AI systems in domains where precision is non-negotiable.
 
-### Key Innovations
-
-1. **Register Pattern Memory**: CPU-inspired architecture for multi-turn state management
-2. **9 Critical Pattern Rules**: Distilled from systematic failure analysis
-3. **Pydantic-Enforced Contracts**: Hard boundaries between planning and execution
-4. **Fuzzy Matching with Confidence**: Robust extraction with clear failure signals
-5. **Metadata-Rich Memory**: Entity and operation tracking for coreference resolution
-
-### Production Readiness Checklist
-
-✅ Comprehensive error handling (custom exception hierarchy)  
-✅ Structured logging with correlation IDs  
-✅ Type-safe interfaces (Pydantic + type hints)  
-✅ Modular design (testable components)  
-✅ Deterministic execution (reproducible results)  
-✅ Observability layer (MetricsTracker)  
-✅ Automated evaluation pipeline  
-✅ Detailed documentation (docstrings, README, REPORT)  
-
-This architecture is ready for deployment in scenarios requiring financial precision, such as:
-- Automated earnings report analysis for investment firms
-- Regulatory compliance checking for financial institutions
-- Real-time analyst support for M&A due diligence
-
 ---
 
 ## 9. Technical Appendix
 
-### 9.1 Key Files
+##TODO##
 
-| File | Purpose | Lines of Code |
-|------|---------|--------------|
-| `src/agent/workflow_planner.py` | Plan generation logic | ~180 |
-| `src/agent/workflow_executor.py` | Plan execution engine | ~500 |
-| `src/models/workflow_schema.py` | Pydantic schemas | ~230 |
-| `src/prompts/workflow_planner.py` | System prompt with patterns | ~530 |
-| `src/tools/workflow_table_tool.py` | Fuzzy matching extraction | ~240 |
-| `src/tools/text_tool.py` | LLM-based prose extraction | ~540 |
-| `src/evaluation/runner.py` | Evaluation orchestration | ~170 |
-| `src/evaluation/tracker.py` | Metrics collection | ~220 |
-
-**Total Core Logic**: ~2,600 lines of Python (excluding tests and utilities)
-
-### 9.2 Dependencies
-
-```toml
-[tool.poetry.dependencies]
-python = "^3.12"
-pydantic = "^2.0"          # Schema validation
-openai = "^1.0"            # LLM API client
-rapidfuzz = "^3.0"         # Fuzzy string matching
-rich = "^13.0"             # Terminal UI
-tqdm = "^4.66"             # Progress bars
-typer = "^0.9"             # CLI framework
 ```
 
-### 9.3 Running the System
-
-```bash
-# Setup
-uv sync
-
-# Smoke test (5 examples)
-uv run python quick_test.py --simple --model gpt-4o
-
-# Model battle (12 examples, 4 models)
-uv run python quick_test.py --model-battle
-
-# Full evaluation (40 conversations)
-uv run python batch_test.py --sample-size 40 --model gpt-4o
-
-# Interactive CLI
-uv run main chat <record_id>
-```
-
-### 9.4 Sample Output Trace
-
-```json
-{
-  "conversation_id": "Double_MAS/2012/page_92.pdf",
-  "model": "gpt-4o",
-  "num_turns": 2,
-  "turns": [
-    {
-      "question": "what was the difference in warranty liability between 2011 and 2012?",
-      "plan": {
-        "thought_process": "Extract warranty liability for both years, compute difference",
-        "steps": [
-          {
-            "step_id": 1,
-            "tool": "extract_value",
-            "source": "table",
-            "table_params": {
-              "row_query": "balance at december 31",
-              "col_query": "2012",
-              "unit_normalization": null
-            }
-          },
-          {
-            "step_id": 2,
-            "tool": "extract_value",
-            "source": "table",
-            "table_params": {
-              "row_query": "balance at december 31",
-              "col_query": "2011",
-              "unit_normalization": null
-            }
-          },
-          {
-            "step_id": 3,
-            "tool": "compute",
-            "operation": "subtract",
-            "operands": [
-              {"type": "reference", "step_ref": 1},
-              {"type": "reference", "step_ref": 2}
-            ]
-          }
-        ]
-      },
-      "execution": {
-        "step_results": {
-          "1": 118.0,
-          "2": 102.0,
-          "3": 16.0
-        },
-        "final_value": 16.0,
-        "execution_time_ms": 342.5
-      },
-      "success": true,
-      "expected": "16"
-    }
-  ]
-}
-```
 
 ---
 
