@@ -350,25 +350,26 @@ WRONG Response (computing answer instead of extracting):
                 return claimed_value
         
         # Step 4: Check if the numeric value appears in evidence (extract all numbers and check)
-        # Extract numeric patterns from evidence and check if any match the claimed value
-        # Try unit conversion - if evidence has "6.0 million" and claimed is 6000.0 (thousands),
-        # check if 6.0 * 1000 = 6000.0 matches claimed_value
+        # The claimed_value is at "display scale" (e.g., 6.0 for "6.0 million")
+        # The text also shows display scale (e.g., "6.0 million" in text)
+        # So we compare pattern_value (from text) directly with claimed_value (from LLM)
         numeric_patterns = re.findall(r'\d+(?:\.\d+)?', normalized_evidence)
         for pattern_value_str in numeric_patterns:
             try:
                 pattern_value = float(pattern_value_str)
-                # Check if this numeric value matches claimed_value directly (within 1% tolerance)
+                
+                # Direct comparison at display scale (both should be at same scale)
+                # Example: Text has "6.0 million", LLM extracts 6.0, pattern finds 6.0
+                # All three are at display scale, so direct comparison works
                 if abs(pattern_value - claimed_value) / max(abs(claimed_value), 1) < 0.01:
                     logger.info(f"Found numeric value in evidence: {pattern_value} ≈ {claimed_value}")
                     return claimed_value
-                # If unit is specified, try unit conversion (evidence value * unit_multiplier should match claimed)
-                if unit in self.unit_multipliers:
-                    unit_multiplier = self.unit_multipliers[unit]
-                    # Check if pattern_value * unit_multiplier ≈ claimed_value
-                    converted_pattern = pattern_value * unit_multiplier
-                    if abs(converted_pattern - claimed_value) / max(abs(claimed_value), 1) < 0.01:
-                        logger.info(f"Found numeric value in evidence (unit conversion): {pattern_value} * {unit_multiplier} = {converted_pattern} ≈ {claimed_value}")
-                        return claimed_value
+                
+                # Also check with rounding tolerance (handle cases like 6.0 vs 6)
+                if abs(round(pattern_value, 1) - round(claimed_value, 1)) < 0.01:
+                    logger.info(f"Found numeric value in evidence (rounded): {pattern_value} ≈ {claimed_value}")
+                    return claimed_value
+                    
             except (ValueError, ZeroDivisionError):
                 continue
         

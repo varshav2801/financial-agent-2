@@ -1,0 +1,2742 @@
+[
+  {
+    "example_id": "Double_MAS/2012/page_92.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 2,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 2,
+    "turns": [
+      {
+        "success": true,
+        "answer": 16.0,
+        "expected": "16",
+        "question": "what was the difference in the company 2019s warranty liability between 2011 and 2012?",
+        "turn": 1,
+        "execution_time_ms": 19011.998176574707,
+        "plan": {
+          "thought_process": "The question asks for the difference in the company's warranty liability between 2011 and 2012. The table provides year columns and rows with balances. I will extract the year-end warranty balance (row 'balance at december 31') for 2012 and for 2011 from the table, then compute the difference as (2012 value) - (2011 value) so the result is positive for an increase from 2011 to 2012.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "balance at december 31",
+                "col_query": "2012",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "balance at december 31",
+                "col_query": "2011",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 118.0,
+          "2": 102.0,
+          "3": 16.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5907,
+          "completion_tokens": 1061,
+          "total_tokens": 6968
+        }
+      },
+      {
+        "success": true,
+        "answer": 15.686274509803921,
+        "expected": "15.7%",
+        "question": "and the percentage change of this value?",
+        "turn": 2,
+        "execution_time_ms": 22050.852060317993,
+        "plan": {
+          "thought_process": "The user asks for the percentage change of \"this value.\" The previous answer (prev_0) is an extraction for the metric 'balance at december 31'. To compute a percentage change we need the earlier (2011) and later (2012) base values. I'll extract 'balance at december 31' for 2011 and 2012 from the table, then compute the percentage change using percentage_change(old=2011_value, new=2012_value). The percentage_change operation expects the old value first (2011) and the new value second (2012) so the sign/interpretation is correct.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "balance at december 31",
+                "col_query": "2011",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "balance at december 31",
+                "col_query": "2012",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage_change",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 16.0,
+          "1": 102.0,
+          "2": 118.0,
+          "3": 15.686274509803921
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5912,
+          "completion_tokens": 1352,
+          "total_tokens": 7264
+        }
+      }
+    ],
+    "numerical_accuracy": 0.5,
+    "financial_accuracy": 0.5,
+    "soft_match_accuracy": 1.0,
+    "correct_turns": "1/2",
+    "numerical_correct_turns": "1/2",
+    "soft_match_correct_turns": "2/2",
+    "total_tokens": 14232,
+    "prompt_tokens": 11819,
+    "completion_tokens": 2413,
+    "avg_tokens_per_turn": 7116.0,
+    "total_response_time_ms": 41062.8502368927,
+    "avg_response_time_ms": 20531.42511844635,
+    "conversation_accuracy": 0.5,
+    "all_correct": false
+  },
+  {
+    "example_id": "Single_MRO/2009/page_127.pdf-1",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 2,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "num_turns": 2,
+    "turns": [
+      {
+        "success": true,
+        "answer": 137.0,
+        "expected": "137",
+        "question": "what was the net difference in asset retirement obligations between 2008 and 2009?",
+        "turn": 1,
+        "execution_time_ms": 17699.769258499146,
+        "plan": {
+          "thought_process": "The question asks for the net difference in \"asset retirement obligations\" between 2008 and 2009. These values are present in the provided table. I will (1) extract the year-end asset retirement obligations for 2009 from the table, (2) extract the year-end asset retirement obligations for 2008 from the table, and (3) compute the net difference as (2009 value minus 2008 value) so the result is positive for an increase (follow the temporal change rule: subtract(TO, FROM)).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "asset retirement obligations as of december 31 ( a )",
+                "col_query": "2009",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "asset retirement obligations as of december 31 ( a )",
+                "col_query": "2008",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 1102.0,
+          "2": 965.0,
+          "3": 137.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5831,
+          "completion_tokens": 1024,
+          "total_tokens": 6855
+        }
+      },
+      {
+        "success": true,
+        "answer": 14.196891191709845,
+        "expected": "14.2%",
+        "question": "what was the percent change?",
+        "turn": 2,
+        "execution_time_ms": 19349.53212738037,
+        "plan": {
+          "thought_process": "The question is ambiguous but likely asks for the percent change for the previously-discussed metric (asset retirement obligations as of december 31 ( a )) between the two available years (2008 \u2192 2009). Per guidance, extract the base values for 2008 and 2009 from the table (do not reuse prev_0), then compute the percentage change using percentage_change(old=2008_value, new=2009_value). Steps are: (1) extract 2008 value for the specified row, (2) extract 2009 value for the specified row, (3) compute percentage_change with operands [step1 (old), step2 (new)].",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "asset retirement obligations as of december 31 ( a )",
+                "col_query": "2008",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "asset retirement obligations as of december 31 ( a )",
+                "col_query": "2009",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage_change",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 137.0,
+          "1": 965.0,
+          "2": 1102.0,
+          "3": 14.196891191709845
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5843,
+          "completion_tokens": 1248,
+          "total_tokens": 7091
+        }
+      }
+    ],
+    "numerical_accuracy": 0.5,
+    "financial_accuracy": 0.5,
+    "soft_match_accuracy": 1.0,
+    "correct_turns": "1/2",
+    "numerical_correct_turns": "1/2",
+    "soft_match_correct_turns": "2/2",
+    "total_tokens": 13946,
+    "prompt_tokens": 11674,
+    "completion_tokens": 2272,
+    "avg_tokens_per_turn": 6973.0,
+    "total_response_time_ms": 37049.30138587952,
+    "avg_response_time_ms": 18524.65069293976,
+    "conversation_accuracy": 0.5,
+    "all_correct": false
+  },
+  {
+    "example_id": "Double_AES/2011/page_230.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 2,
+      "has_type2_question": true,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 2,
+    "turns": [
+      {
+        "success": true,
+        "answer": 2.5999999999999996,
+        "expected": "2.6",
+        "question": "what is the total amount available under the committed credit facilities as of december 31, 2011, in billions?",
+        "turn": 1,
+        "execution_time_ms": 32233.68501663208,
+        "plan": {
+          "thought_process": "The table does not contain a 2011 column (available table years start at 2012), so the 2011 amounts must be extracted from the prose. The post-text states two committed but unused credit facility amounts as of December 31, 2011: ~$1.4 billion for facilities under construction and ~$1.2 billion for available committed revolving credit lines. Extract each value from the post_text (unit = billion) and then add them to produce the total amount available under committed credit facilities as of 12/31/2011 (result in billions).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "committed",
+                  "unused",
+                  "facilities",
+                  "construction"
+                ],
+                "year": "2011",
+                "unit": "billion",
+                "value_context": "committed but unused credit facilities available to fund construction as of December 31, 2011 (approx $1.4 billion)"
+              },
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "committed",
+                  "unused",
+                  "revolving",
+                  "credit"
+                ],
+                "year": "2011",
+                "unit": "billion",
+                "value_context": "available but unused committed revolving credit lines as of December 31, 2011 (approx $1.2 billion)"
+              },
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 1.4,
+          "2": 1.2,
+          "3": 2.5999999999999996
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 9602,
+          "completion_tokens": 2195,
+          "total_tokens": 11797
+        }
+      },
+      {
+        "success": true,
+        "answer": 10.548234709099951,
+        "expected": "11%",
+        "question": "and as of that same date, how much did the non-recourse debt due in 2014 represent in relation to the total debt, in percentage?",
+        "turn": 2,
+        "execution_time_ms": 16985.051155090332,
+        "plan": {
+          "thought_process": "We need the portion (in percent) that the non-recourse debt maturing in 2014 represents of the total non-recourse debt as of the same date. Both values are in the table under the row 'annual maturities ( in millions )'. I'll extract the 2014 maturity amount and the 'total non-recourse debt' amount from that row (normalizing units to millions), then compute the percentage = (2014_amount \u00f7 total_amount) expressed as a percentage using the percentage operation.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "annual maturities ( in millions )",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "annual maturities ( in millions )",
+                "col_query": "total non-recourse debt",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 2.5999999999999996,
+          "1": 1697.0,
+          "2": 16088.0,
+          "3": 10.548234709099951
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6002,
+          "completion_tokens": 952,
+          "total_tokens": 6954
+        }
+      }
+    ],
+    "numerical_accuracy": 0.5,
+    "financial_accuracy": 0.5,
+    "soft_match_accuracy": 0.5,
+    "correct_turns": "1/2",
+    "numerical_correct_turns": "1/2",
+    "soft_match_correct_turns": "1/2",
+    "total_tokens": 18751,
+    "prompt_tokens": 15604,
+    "completion_tokens": 3147,
+    "avg_tokens_per_turn": 9375.5,
+    "total_response_time_ms": 49218.73617172241,
+    "avg_response_time_ms": 24609.368085861206,
+    "conversation_accuracy": 0.5,
+    "all_correct": false
+  },
+  {
+    "example_id": "Double_AES/2011/page_131.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 1,
+      "has_type2_question": true,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "num_turns": 1,
+    "turns": [
+      {
+        "success": true,
+        "answer": 1313.0,
+        "expected": "1215",
+        "question": "what is the company's total coal capacity in gross mw?",
+        "turn": 1,
+        "execution_time_ms": 36608.96611213684,
+        "plan": {
+          "thought_process": "We need the company's total coal capacity (gross MW). From the table rows, the coal-fired plants are Angamos, Laurel Mountain, and Maritza. Plan: extract the 'gross mw' cell for each of those three plants from the table, then sum them. Because the compute tool supports only 1-2 operands per step, add pairwise: first add Angamos + Laurel Mountain, then add Maritza to that subtotal to produce the total coal gross MW.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "angamos",
+                "col_query": "gross mw",
+                "unit_normalization": "none"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "laurel mountain",
+                "col_query": "gross mw",
+                "unit_normalization": "none"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "maritza",
+                "col_query": "gross mw",
+                "unit_normalization": "none"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 4,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            },
+            {
+              "step_id": 5,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 4,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 3,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 545.0,
+          "2": 98.0,
+          "3": 670.0,
+          "4": 643.0,
+          "5": 1313.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6000,
+          "completion_tokens": 2350,
+          "total_tokens": 8350
+        }
+      }
+    ],
+    "numerical_accuracy": 0.0,
+    "financial_accuracy": 0.0,
+    "soft_match_accuracy": 0.0,
+    "correct_turns": "0/1",
+    "numerical_correct_turns": "0/1",
+    "soft_match_correct_turns": "0/1",
+    "total_tokens": 8350,
+    "prompt_tokens": 6000,
+    "completion_tokens": 2350,
+    "avg_tokens_per_turn": 8350.0,
+    "total_response_time_ms": 36608.96611213684,
+    "avg_response_time_ms": 36608.96611213684,
+    "conversation_accuracy": 0.0,
+    "all_correct": false
+  },
+  {
+    "example_id": "Single_JKHY/2009/page_28.pdf-3",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 4,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 4,
+    "turns": [
+      {
+        "success": true,
+        "answer": 206588.0,
+        "expected": "206588",
+        "question": "what is the net cash from operating activities in 2009?",
+        "turn": 1,
+        "execution_time_ms": 10565.991878509521,
+        "plan": {
+          "thought_process": "The table contains a row named 'net cash from operating activities' and a column for 'Year ended June 30, 2009'. To answer the question, extract that cell from the table. No further computation is needed.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "net cash from operating activities",
+                "col_query": "Year ended June 30, 2009",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "1": 206588.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5943,
+          "completion_tokens": 512,
+          "total_tokens": 6455
+        }
+      },
+      {
+        "success": true,
+        "answer": 181001.0,
+        "expected": "181001",
+        "question": "what about in 2008?",
+        "turn": 2,
+        "execution_time_ms": 9918.957948684692,
+        "plan": {
+          "thought_process": "The user asked \"what about in 2008?\" immediately after a previous answer that extracted net cash from operating activities (prev_0). The pronoun continues the same entity (net cash from operating activities), so extract that metric from the table for the 2008 column. No computation is required \u2014 just a table lookup for the row 'net cash from operating activities' and column '2008'.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "net cash from operating activities",
+                "col_query": "2008",
+                "unit_normalization": "none"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 206588.0,
+          "1": 181001.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5957,
+          "completion_tokens": 605,
+          "total_tokens": 6562
+        }
+      },
+      {
+        "success": true,
+        "answer": 25587.0,
+        "expected": "25587",
+        "question": "what is the difference?",
+        "turn": 3,
+        "execution_time_ms": 71658.1358909607,
+        "plan": {
+          "thought_process": "User asks only \"what is the difference?\" immediately after prior extractions of 'net cash from operating activities' for 2009 (prev_0) and 2008 (prev_1). Per conversational rules, the pronoun refers to the most recent entity (net cash from operating activities) and we should compute the difference between the two previous answers. For a temporal change, use subtract(TO, FROM) \u2014 here 2009 minus 2008 \u2014 by referencing the previous answers via negative step_refs (-1 = prev_0 for 2009, -2 = prev_1 for 2008). No new table extraction is needed.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": -2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 206588.0,
+          "-2": 181001.0,
+          "1": 25587.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5977,
+          "completion_tokens": 717,
+          "total_tokens": 6694
+        }
+      },
+      {
+        "success": true,
+        "answer": 14.136385986817752,
+        "expected": "14.1%",
+        "question": "what percentage change does this represent?",
+        "turn": 4,
+        "execution_time_ms": 11972.661972045898,
+        "plan": {
+          "thought_process": "The pronoun \"this\" refers to the reported increase of $25,587 in cash provided by operations (the intermediate subtraction stored as prev_2) and the two extracted base values correspond to net cash from operating activities: prev_1 = 181,001 (old, fiscal 2008) and prev_0 = 206,588 (new, fiscal 2009). To answer \"what percentage change does this represent?\" compute the percentage change using the old value (prev_1) and new value (prev_0). Use the percentage_change operation with operands [old, new] referencing the previous answers.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage_change",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -2,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 206588.0,
+          "-2": 181001.0,
+          "-3": 25587.0,
+          "1": 14.136385986817752
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5997,
+          "completion_tokens": 904,
+          "total_tokens": 6901
+        }
+      }
+    ],
+    "numerical_accuracy": 0.75,
+    "financial_accuracy": 0.75,
+    "soft_match_accuracy": 1.0,
+    "correct_turns": "3/4",
+    "numerical_correct_turns": "3/4",
+    "soft_match_correct_turns": "4/4",
+    "total_tokens": 26612,
+    "prompt_tokens": 23874,
+    "completion_tokens": 2738,
+    "avg_tokens_per_turn": 6653.0,
+    "total_response_time_ms": 104115.7476902008,
+    "avg_response_time_ms": 26028.9369225502,
+    "conversation_accuracy": 0.75,
+    "all_correct": false
+  },
+  {
+    "example_id": "Single_RE/2013/page_40.pdf-1",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 3,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "num_turns": 3,
+    "turns": [
+      {
+        "success": true,
+        "answer": 605.0,
+        "expected": "605",
+        "question": "what is the sum of pre-tax catastrophe losses in 2012 and 2013?",
+        "turn": 1,
+        "execution_time_ms": 11668.292999267578,
+        "plan": {
+          "thought_process": "The table lists 'pre-tax catastrophe losses' as a row and years (including 2013 and 2012) as columns. I will extract the pre-tax catastrophe losses for 2013 and 2012 from the table (normalizing units to millions as indicated by the table header), then add those two extracted values to get the sum. Each action is a single step: two table extractions followed by one addition compute step.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2013",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2012",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 195.0,
+          "2": 410.0,
+          "3": 605.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5756,
+          "completion_tokens": 668,
+          "total_tokens": 6424
+        }
+      },
+      {
+        "success": true,
+        "answer": 1300.4,
+        "expected": "1300.4",
+        "question": "what is the value in 2011?",
+        "turn": 2,
+        "execution_time_ms": 8362.256288528442,
+        "plan": {
+          "thought_process": "The question asks for the table value for 2011. The table has years as columns (including '2011') and a single metric row 'pre-tax catastrophe losses'. I will extract that metric for column '2011' from the table and normalize units to millions.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2011",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 605.0,
+          "1": 1300.4
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5765,
+          "completion_tokens": 533,
+          "total_tokens": 6298
+        }
+      },
+      {
+        "success": true,
+        "answer": 2543.9,
+        "expected": "1905.4",
+        "question": "what is the sum including 2011?",
+        "turn": 3,
+        "execution_time_ms": 26899.230003356934,
+        "plan": {
+          "thought_process": "The user asks for the sum that includes 2011 for the metric 'pre-tax catastrophe losses'. I will extract the pre-tax catastrophe losses from the table for each year available (2013, 2012, 2011, 2010, 2009) using table extraction (row must match the metric name exactly). Then I will sum the five extracted year values. The table appears to report amounts in dollars-in-millions, so I will normalize to 'million' for consistency. Because compute steps support only two operands at a time, I will perform the sum as a sequence of pairwise additions to produce the final total.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2013",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2012",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2011",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 4,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2010",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 5,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "pre-tax catastrophe losses",
+                "col_query": "2009",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 6,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            },
+            {
+              "step_id": 7,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 6,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 3,
+                  "value": null
+                }
+              ]
+            },
+            {
+              "step_id": 8,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 7,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 4,
+                  "value": null
+                }
+              ]
+            },
+            {
+              "step_id": 9,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "add",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 8,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 5,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 605.0,
+          "-2": 1300.4,
+          "1": 195.0,
+          "2": 410.0,
+          "3": 1300.4,
+          "4": 571.1,
+          "5": 67.4,
+          "6": 605.0,
+          "7": 1905.4,
+          "8": 2476.5,
+          "9": 2543.9
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5786,
+          "completion_tokens": 1838,
+          "total_tokens": 7624
+        }
+      }
+    ],
+    "numerical_accuracy": 0.6666666666666666,
+    "financial_accuracy": 0.6666666666666666,
+    "soft_match_accuracy": 0.6666666666666666,
+    "correct_turns": "2/3",
+    "numerical_correct_turns": "2/3",
+    "soft_match_correct_turns": "2/3",
+    "total_tokens": 20346,
+    "prompt_tokens": 17307,
+    "completion_tokens": 3039,
+    "avg_tokens_per_turn": 6782.0,
+    "total_response_time_ms": 46929.779291152954,
+    "avg_response_time_ms": 15643.259763717651,
+    "conversation_accuracy": 0.6666666666666666,
+    "all_correct": false
+  },
+  {
+    "example_id": "Double_AES/2016/page_98.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 4,
+      "has_type2_question": true,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 4,
+    "turns": [
+      {
+        "success": true,
+        "answer": -31.0,
+        "expected": "-31",
+        "question": "what was the total of foreign currency transaction gains ( losses ) for aes corporation in 2015, in millions?",
+        "turn": 1,
+        "execution_time_ms": 37117.663860321045,
+        "plan": {
+          "thought_process": "The value requested is a single data point from the table: the foreign currency transaction gains (losses) for the row 'aes corporation' in year 2015. The table includes 2015 as a column and 'aes corporation' as a row, so I'll extract that cell from the table and normalize units to millions. No further computation is needed here (the extractor should return the numeric value including sign for gains/losses).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "aes corporation",
+                "col_query": "2015",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "1": -31.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5991,
+          "completion_tokens": 2649,
+          "total_tokens": 8640
+        }
+      },
+      {
+        "success": true,
+        "answer": -34.0,
+        "expected": "-34",
+        "question": "and what was it in 2014, also in millions?",
+        "turn": 2,
+        "execution_time_ms": 71174.94297027588,
+        "plan": {
+          "thought_process": "The user asks for \"it in 2014\" where \"it\" refers to the same entity as the previous answer (prev_0: entity = aes corporation, operation = extraction). Following entity-tracking rules, I will extract the AES Corporation value for 2014 from the table. Use table extraction (not previous numeric value) and normalize the result to millions.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "aes corporation",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -31.0,
+          "1": -34.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5997,
+          "completion_tokens": 548,
+          "total_tokens": 6545
+        }
+      },
+      {
+        "success": true,
+        "answer": -26.0,
+        "expected": "3",
+        "question": "by how much, then, did that total change over the period?",
+        "turn": 3,
+        "execution_time_ms": 18687.31689453125,
+        "plan": {
+          "thought_process": "Interpret 'that total' as the row labeled \"total ( 1 )\" in the table. \"Over the period\" refers to the change from 2014 to 2016 (earliest to latest year available). Plan: extract the 'total ( 1 )' value for 2016 and for 2014 from the table, then compute the change as (2016 value) - (2014 value). Do not use previous aes corporation extractions since they refer to a different entity.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "total ( 1 )",
+                "col_query": "2016",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "total ( 1 )",
+                "col_query": "2014",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -31.0,
+          "-2": -34.0,
+          "1": -15.0,
+          "2": 11.0,
+          "3": -26.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6016,
+          "completion_tokens": 1262,
+          "total_tokens": 7278
+        }
+      },
+      {
+        "success": true,
+        "answer": -19.0,
+        "expected": "-19",
+        "question": "and what was that change over the subsequent year, from 2015 to 2016?",
+        "turn": 4,
+        "execution_time_ms": 16381.082773208618,
+        "plan": {
+          "thought_process": "The pronoun \"that\" continues the previous entity context (aes corporation). The user asks for the change from 2015 to 2016, which is a temporal change: compute (value in 2016) - (value in 2015). Plan: extract aes corporation for 2015 and 2016 from the table, then subtract (2016 minus 2015) to produce the change.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "aes corporation",
+                "col_query": "2015",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "aes corporation",
+                "col_query": "2016",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -31.0,
+          "-2": -34.0,
+          "-3": -26.0,
+          "1": -31.0,
+          "2": -50.0,
+          "3": -19.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 6041,
+          "completion_tokens": 1110,
+          "total_tokens": 7151
+        }
+      }
+    ],
+    "numerical_accuracy": 0.75,
+    "financial_accuracy": 0.75,
+    "soft_match_accuracy": 0.75,
+    "correct_turns": "3/4",
+    "numerical_correct_turns": "3/4",
+    "soft_match_correct_turns": "3/4",
+    "total_tokens": 29614,
+    "prompt_tokens": 24045,
+    "completion_tokens": 5569,
+    "avg_tokens_per_turn": 7403.5,
+    "total_response_time_ms": 143361.0064983368,
+    "avg_response_time_ms": 35840.2516245842,
+    "conversation_accuracy": 0.75,
+    "all_correct": false
+  },
+  {
+    "example_id": "Double_PNC/2014/page_99.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 4,
+      "has_type2_question": true,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "num_turns": 4,
+    "turns": [
+      {
+        "success": true,
+        "answer": 191.0071942446043,
+        "expected": "531",
+        "question": "what is the impact of total net charge-offs in the balance of allowance for loan and lease losses during 2014?",
+        "turn": 1,
+        "execution_time_ms": 33101.53603553772,
+        "plan": {
+          "thought_process": "To show the impact of total net charge-offs on the allowance for loan and lease losses in 2014, first extract the 2014 value for total net charge-offs and the beginning and ending allowance balances (January 1 and December 31 2014) from the table. Then compute the net change in the allowance (Dec 31 minus Jan 1). Finally compute (a) the percent that the total net charge-offs represent of the beginning allowance balance and (b) the percent of the net change in the allowance that is attributable to total net charge-offs. This provides both the absolute charge-off amount and its relative impact on the allowance balance and on the net change during 2014.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "total net charge-offs",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "january 1",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "december 31",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 4,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 3,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            },
+            {
+              "step_id": 5,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            },
+            {
+              "step_id": 6,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 4,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": -531.0,
+          "2": 3609.0,
+          "3": 3331.0,
+          "4": -278.0,
+          "5": -14.713216957605985,
+          "6": 191.0071942446043
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6001,
+          "completion_tokens": 2445,
+          "total_tokens": 8446
+        }
+      },
+      {
+        "success": true,
+        "answer": 3331.0,
+        "expected": "3609",
+        "question": "what about the balance of allowance for loan and lease losses as of december 31, 2014?",
+        "turn": 2,
+        "execution_time_ms": 19806.535720825195,
+        "plan": {
+          "thought_process": "The user asks for the balance of the allowance for loan and lease losses as of December 31, 2014. This is a direct table extraction: the table has a row named exactly 'december 31' and a column '2014'. Do not use the previous answer (which was for total net charge-offs) because this is a different metric/entity. I will extract the 'december 31' row for the 2014 column from the main table (normalize units to millions).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "december 31",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 191.0071942446043,
+          "1": 3331.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6020,
+          "completion_tokens": 1467,
+          "total_tokens": 7487
+        }
+      },
+      {
+        "success": true,
+        "answer": 0.896421845574388,
+        "expected": "14.7%",
+        "question": "what proportion is related to total net charge-offs?",
+        "turn": 3,
+        "execution_time_ms": 20325.412273406982,
+        "plan": {
+          "thought_process": "Interpret \u201cwhat proportion is related to total net charge-offs?\u201d as asking for the portion of total net charge-offs attributable to consumer lending. Use the most recent year available in the table (2014) unless another year is specified. Plan: (1) extract consumer lending net charge-offs for 2014 from the table, (2) extract total net charge-offs for 2014 from the table, (3) compute the proportion as consumer_net_chargeoffs \u00f7 total_net_chargeoffs (a raw ratio \u2014 not formatted as a percent).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "consumer lending net charge-offs ( a )",
+                "col_query": "2014",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "total net charge-offs",
+                "col_query": "2014",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "divide",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 191.0071942446043,
+          "-2": 3331.0,
+          "1": -476.0,
+          "2": -531.0,
+          "3": 0.896421845574388
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6029,
+          "completion_tokens": 1592,
+          "total_tokens": 7621
+        }
+      },
+      {
+        "success": true,
+        "answer": 0.42457231726283046,
+        "expected": "0.43",
+        "question": "what is the ratio of provision for credit losses in 2014 to 2013?",
+        "turn": 4,
+        "execution_time_ms": 10277.469158172607,
+        "plan": {
+          "thought_process": "We need the ratio (2014 value divided by 2013 value) of the metric 'provision for credit losses'. Both years (2014 and 2013) are available as table columns and the exact row name 'provision for credit losses' exists in the table. Plan: extract the 'provision for credit losses' value for 2014 from the table, extract the 2013 value from the table, then compute divide(2014_value, 2013_value) to produce the raw ratio.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "provision for credit losses",
+                "col_query": "2014",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "provision for credit losses",
+                "col_query": "2013",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "divide",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 191.0071942446043,
+          "-2": 3331.0,
+          "-3": 0.896421845574388,
+          "1": 273.0,
+          "2": 643.0,
+          "3": 0.42457231726283046
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 6064,
+          "completion_tokens": 756,
+          "total_tokens": 6820
+        }
+      }
+    ],
+    "numerical_accuracy": 0.0,
+    "financial_accuracy": 0.0,
+    "soft_match_accuracy": 0.0,
+    "correct_turns": "0/4",
+    "numerical_correct_turns": "0/4",
+    "soft_match_correct_turns": "0/4",
+    "total_tokens": 30374,
+    "prompt_tokens": 24114,
+    "completion_tokens": 6260,
+    "avg_tokens_per_turn": 7593.5,
+    "total_response_time_ms": 83510.9531879425,
+    "avg_response_time_ms": 20877.738296985626,
+    "conversation_accuracy": 0.0,
+    "all_correct": false
+  },
+  {
+    "example_id": "Single_UPS/2009/page_33.pdf-2",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 6,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 6,
+    "turns": [
+      {
+        "success": true,
+        "answer": -24.049999999999997,
+        "expected": "-24.05",
+        "question": "what was the change in the performance of the united parcel service inc . from 2004 to 2009?",
+        "turn": 1,
+        "execution_time_ms": 9630.237102508545,
+        "plan": {
+          "thought_process": "The question asks for the change in performance of \"united parcel service inc .\" from 2004 to 2009. The table contains yearly columns including '12/31/04' and '12/31/09' and a row named exactly 'united parcel service inc .'. I will (1) extract the 2004 value for that row, (2) extract the 2009 value for that row, then (3) compute the change as (value in 2009) - (value in 2004) because \"change from 2004 to 2009\" requires TO year minus FROM year to yield a positive result for increases.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/04",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/09",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 100.0,
+          "2": 75.95,
+          "3": -24.049999999999997
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5778,
+          "completion_tokens": 793,
+          "total_tokens": 6571
+        }
+      },
+      {
+        "success": true,
+        "answer": -24.049999999999997,
+        "expected": "-24.05%",
+        "question": "and how much does this change represent in relation to that performance in 2004, in percentage?",
+        "turn": 2,
+        "execution_time_ms": 19180.195093154907,
+        "plan": {
+          "thought_process": "The question asks what \"this change\" represents as a percentage of \"that performance in 2004.\" The previous answer (prev_0) is for the same entity (united parcel service inc.) and will be treated as the referenced \"this change.\" I will (1) extract the UPS value for 12/31/04 from the table (this is the \"that performance in 2004\"), and then (2) compute the percentage that prev_0 (the change) represents of that 2004 value using a percentage operation (part = prev_0, whole = UPS 12/31/04). I use step_ref -1 to refer to the prior answer (prev_0).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/04",
+                "unit_normalization": "none"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -24.049999999999997,
+          "1": 100.0,
+          "2": -24.049999999999997
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5797,
+          "completion_tokens": 1535,
+          "total_tokens": 7332
+        }
+      },
+      {
+        "success": true,
+        "answer": 102.11,
+        "expected": "102.11",
+        "question": "what was the performance value of the s&p 500 index in 2009?",
+        "turn": 3,
+        "execution_time_ms": 8021.050930023193,
+        "plan": {
+          "thought_process": "The question asks for the S&P 500 index performance value in 2009. The table includes a column for '12/31/09' and a row named 's&p 500 index', so extract the value directly from the table. This is a new entity (switching from the previous UPS answers), so do not use previous answers. No arithmetic is required.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "s&p 500 index",
+                "col_query": "12/31/09",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -24.049999999999997,
+          "-2": -24.049999999999997,
+          "1": 102.11
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5818,
+          "completion_tokens": 482,
+          "total_tokens": 6300
+        }
+      },
+      {
+        "success": true,
+        "answer": -24.049999999999997,
+        "expected": "2.11",
+        "question": "what was, then, the change in that performance from 2004 to 2009?",
+        "turn": 4,
+        "execution_time_ms": 20273.12922477722,
+        "plan": {
+          "thought_process": "The question uses the pronoun \"that performance\" and, per the entity-tracking rules, should continue the most recent entity from previous answers (prev_0 = united parcel service inc.). Therefore extract UPS values for 12/31/04 and 12/31/09 from the table, then compute the change as (value in 2009) - (value in 2004). Temporal change uses subtract(TO, FROM) so the compute step will subtract the 2004 extract from the 2009 extract.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/04",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/09",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -24.049999999999997,
+          "-2": -24.049999999999997,
+          "-3": 102.11,
+          "1": 100.0,
+          "2": 75.95,
+          "3": -24.049999999999997
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5841,
+          "completion_tokens": 1339,
+          "total_tokens": 7180
+        }
+      },
+      {
+        "success": true,
+        "answer": -23.55303104495152,
+        "expected": "2.11%",
+        "question": "and how much does this change represent in relation to that performance in 2004, in percentage?",
+        "turn": 5,
+        "execution_time_ms": 31378.100872039795,
+        "plan": {
+          "thought_process": "The user asks for how much a previously referenced change ('this change') represents relative to a previously referenced 2004 performance ('that performance in 2004'), expressed as a percentage. Both values were already extracted earlier in the conversation (from previous_answers). Per the conversation-history referencing rules, use previous answers rather than re-extracting. Map the conversation-history references: prev_3 is the change value and prev_2 is the 2004 performance. Compute percentage(part = change, whole = performance_2004) using the 'percentage' operation (returns formatted percent).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -4,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": -3,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -24.049999999999997,
+          "-2": -24.049999999999997,
+          "-3": 102.11,
+          "-4": -24.049999999999997,
+          "1": -23.55303104495152
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5866,
+          "completion_tokens": 2365,
+          "total_tokens": 8231
+        }
+      },
+      {
+        "success": true,
+        "answer": -26.159999999999997,
+        "expected": "-26.16%",
+        "question": "what is, then, the difference between the percent representation of the united parcel service inc . and the s&p 500 index?",
+        "turn": 6,
+        "execution_time_ms": 42702.152967453,
+        "plan": {
+          "thought_process": "The user asks for the difference between the percent representation of United Parcel Service, Inc. and the S&P 500 index. A previously computed percent result is available as the most recent previous answer (prev_4) which corresponds to the percent representation for United Parcel Service, Inc.; use that via a negative step_ref. The S&P 500 value was previously extracted (prev_2). To get its percent representation relative to the 100 baseline (investment-benchmark style), compute the change = (S&P_value - 100) and then express that change as a percentage of 100 using the percentage operation. Finally compute the difference = (UPS_percent - S&P_percent) by subtracting the S&P percent from the UPS percent. Steps reference previous answers using negative step_refs where appropriate and perform the needed arithmetic without computing numeric results here (executor will compute).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -3,
+                  "value": null
+                },
+                {
+                  "type": "literal",
+                  "step_ref": null,
+                  "value": 100.0
+                }
+              ]
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "literal",
+                  "step_ref": null,
+                  "value": 100.0
+                }
+              ]
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -24.049999999999997,
+          "-2": -24.049999999999997,
+          "-3": 102.11,
+          "-4": -24.049999999999997,
+          "-5": -23.55303104495152,
+          "1": 2.1099999999999994,
+          "2": 2.1099999999999994,
+          "3": -26.159999999999997
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5893,
+          "completion_tokens": 2698,
+          "total_tokens": 8591
+        }
+      }
+    ],
+    "numerical_accuracy": 0.3333333333333333,
+    "financial_accuracy": 0.3333333333333333,
+    "soft_match_accuracy": 0.6666666666666666,
+    "correct_turns": "2/6",
+    "numerical_correct_turns": "2/6",
+    "soft_match_correct_turns": "4/6",
+    "total_tokens": 44205,
+    "prompt_tokens": 34993,
+    "completion_tokens": 9212,
+    "avg_tokens_per_turn": 7367.5,
+    "total_response_time_ms": 131184.86618995667,
+    "avg_response_time_ms": 21864.14436499278,
+    "conversation_accuracy": 0.3333333333333333,
+    "all_correct": false
+  },
+  {
+    "example_id": "Single_CE/2010/page_134.pdf-2",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 5,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "error": "Evaluation timeout (300s)"
+  },
+  {
+    "example_id": "Double_UPS/2009/page_33.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 7,
+      "has_type2_question": true,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 7,
+    "turns": [
+      {
+        "success": true,
+        "answer": -8.939999999999998,
+        "expected": "-8.94",
+        "question": "what was the fluctuation of the performance price of the ups from 2004 to 2006?",
+        "turn": 1,
+        "execution_time_ms": 16562.58511543274,
+        "plan": {
+          "thought_process": "The question asks for the fluctuation (change) of United Parcel Service's performance price from 2004 to 2006. Per the temporal-change pattern, \"change from 2004 to 2006\" should be computed as (value at 12/31/06) - (value at 12/31/04). I'll extract the UPS row values for 12/31/04 and 12/31/06 from the table, then compute the subtraction (2006 minus 2004) to produce the fluctuation. The table row_query will use the exact metric name 'united parcel service inc .' and column queries will be '12/31/04' and '12/31/06'.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/04",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/06",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "1": 100.0,
+          "2": 91.06,
+          "3": -8.939999999999998
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5776,
+          "completion_tokens": 1060,
+          "total_tokens": 6836
+        }
+      },
+      {
+        "success": true,
+        "answer": -0.08939999999999998,
+        "expected": "-8.9%",
+        "question": "and how much does this fluctuation represent in relation to that price in 2004?",
+        "turn": 2,
+        "execution_time_ms": 17275.532007217407,
+        "plan": {
+          "thought_process": "Resolve pronouns: 'this fluctuation' refers to the most recent result for the same entity (prev_0, entity = 'united parcel service inc .'). The question asks how that fluctuation compares to 'that price in 2004' \u2014 so extract the 12/31/04 price for United Parcel Service from the table, then compute the fluctuation in relation to that 2004 price. The phrasing 'in relation to' indicates a ratio operation (divide fluctuation by the 2004 price). Use prev_0 as the fluctuation (reference step_ref = -1), extract the 2004 price (step 1), then divide (step 2).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/04",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "divide",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -8.939999999999998,
+          "1": 100.0,
+          "2": -0.08939999999999998
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5795,
+          "completion_tokens": 1274,
+          "total_tokens": 7069
+        }
+      },
+      {
+        "success": true,
+        "answer": 84.89,
+        "expected": "-24.05",
+        "question": "and from this year to 2009, what was the fluctuation for that stock?",
+        "turn": 3,
+        "execution_time_ms": 27876.451015472412,
+        "plan": {
+          "thought_process": "The user asks for the fluctuation of \"that stock\" from \"this year\" to 2009. The previous answers show the most recent extraction (prev_0) is for the same entity (united parcel service inc.), so \"this year\" refers to that prior extracted value (use step_ref -1). I will extract the 12/31/09 value for 'united parcel service inc .' from the table, then compute the change as (value in 12/31/09) - (value for 'this year' from prev_0) per the temporal rule (change from X to Y = subtract(Y, X)).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/09",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -8.939999999999998,
+          "-2": -0.08939999999999998,
+          "1": 75.95,
+          "2": 84.89
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5820,
+          "completion_tokens": 1585,
+          "total_tokens": 7405
+        }
+      },
+      {
+        "success": true,
+        "answer": -10.53127576864177,
+        "expected": "-24.05%",
+        "question": "what is this fluctuation as a percentage of the 2004 price?",
+        "turn": 4,
+        "execution_time_ms": 32585.132122039795,
+        "plan": {
+          "thought_process": "The pronoun \"this fluctuation\" refers to the most recent extracted fluctuation for United Parcel Service (prev_0). The question asks for that fluctuation expressed as a percentage of the 2004 price; the 2004 price was previously extracted (prev_2). Use the previous answers rather than re-extracting. Compute percentage = (fluctuation / 2004_price) * 100 using a percentage operation with operands referencing the most recent answer (prev_0 -> step_ref -1) as the part and the 2004 price (prev_2 -> step_ref -3) as the whole.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": -3,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -8.939999999999998,
+          "-2": -0.08939999999999998,
+          "-3": 84.89,
+          "1": -10.53127576864177
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5837,
+          "completion_tokens": 1479,
+          "total_tokens": 7316
+        }
+      },
+      {
+        "success": true,
+        "answer": 2.1099999999999994,
+        "expected": "2.11",
+        "question": "and for the s&p 500 index price, what was the fluctuation in those five years?",
+        "turn": 5,
+        "execution_time_ms": 22058.68911743164,
+        "plan": {
+          "thought_process": "User asks for the fluctuation for the 's&p 500 index' over the same five-year span referenced earlier. This is a switch to a new entity (s&p 500 index), so I will extract the index values from the table for the start and end of that five-year period. The available table years include '12/31/04' through '12/31/09'; the five-year span is represented by the change from 12/31/04 to 12/31/09. I will: (1) extract the s&p 500 index value at 12/31/04, (2) extract the s&p 500 index value at 12/31/09, and (3) compute the fluctuation as (value at 12/31/09) - (value at 12/31/04). Do not compute numeric results here \u2014 leave arithmetic to the executor.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "s&p 500 index",
+                "col_query": "12/31/04",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "s&p 500 index",
+                "col_query": "12/31/09",
+                "unit_normalization": null
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -8.939999999999998,
+          "-2": -0.08939999999999998,
+          "-3": 84.89,
+          "-4": -10.53127576864177,
+          "1": 100.0,
+          "2": 102.11,
+          "3": 2.1099999999999994
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 5863,
+          "completion_tokens": 1290,
+          "total_tokens": 7153
+        }
+      },
+      {
+        "success": true,
+        "answer": -8.939999999999998,
+        "expected": "2.11%",
+        "question": "and what percentage does this fluctuation represent in relation to the 2004 price of this stock?",
+        "turn": 6,
+        "execution_time_ms": 27015.78187942505,
+        "plan": {
+          "thought_process": "User asks what percentage 'this fluctuation' represents relative to the 2004 price of the same stock. The pronoun 'this fluctuation' refers to the most recent previous result for the same entity (prev_0, entity: united parcel service inc.). I will: (1) extract the 12/31/04 price for 'united parcel service inc .' from the table, and (2) compute the percentage that the fluctuation (use prev_0 via step_ref -1) is of that 2004 price using a percentage operation (part = fluctuation, whole = 2004 price).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "united parcel service inc .",
+                "col_query": "12/31/04",
+                "unit_normalization": "none"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -8.939999999999998,
+          "-2": -0.08939999999999998,
+          "-3": 84.89,
+          "-4": -10.53127576864177,
+          "-5": 2.1099999999999994,
+          "1": 100.0,
+          "2": -8.939999999999998
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5889,
+          "completion_tokens": 1772,
+          "total_tokens": 7661
+        }
+      },
+      {
+        "success": true,
+        "answer": -12.64127576864177,
+        "expected": "-26.16%",
+        "question": "what is, then, the difference between the ups percentage and this s&p 500 index one, for this five year period?",
+        "turn": 7,
+        "execution_time_ms": 23814.491033554077,
+        "plan": {
+          "thought_process": "The user asks for the difference between UPS's percentage and the S&P 500 index percentage for the five-year period. Both percentages were computed/extracted in earlier answers: the UPS percentage is stored in prev_3 and the S&P 500 percentage is stored in prev_4. Per the workflow rules, use previous-answer references (negative step_refs) and compute UPS_pct minus S&P_pct to get the difference. I will perform a single subtraction: (UPS percentage) - (S&P 500 percentage).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -4,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": -5,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": -8.939999999999998,
+          "-2": -0.08939999999999998,
+          "-3": 84.89,
+          "-4": -10.53127576864177,
+          "-5": 2.1099999999999994,
+          "-6": -8.939999999999998,
+          "1": -12.64127576864177
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 5919,
+          "completion_tokens": 1520,
+          "total_tokens": 7439
+        }
+      }
+    ],
+    "numerical_accuracy": 0.2857142857142857,
+    "financial_accuracy": 0.42857142857142855,
+    "soft_match_accuracy": 0.42857142857142855,
+    "correct_turns": "3/7",
+    "numerical_correct_turns": "2/7",
+    "soft_match_correct_turns": "3/7",
+    "total_tokens": 50879,
+    "prompt_tokens": 40899,
+    "completion_tokens": 9980,
+    "avg_tokens_per_turn": 7268.428571428572,
+    "total_response_time_ms": 167188.66229057312,
+    "avg_response_time_ms": 23884.094612939018,
+    "conversation_accuracy": 0.42857142857142855,
+    "all_correct": false
+  },
+  {
+    "example_id": "Double_ETR/2016/page_403.pdf",
+    "model": "o3",
+    "features": {
+      "num_dialogue_turns": 8,
+      "has_type2_question": true,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "error": "Evaluation timeout (300s)"
+  }
+]

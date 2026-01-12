@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-01-11T22:27:58.567926",
+  "models": [
+    "o3"
+  ],
+  "model_results": [
+    {
+      "model": "o3",
+      "aggregate_metrics": {
+        "total_examples": 10,
+        "errors": 2,
+        "overall": {
+          "numerical_accuracy": 0.42857142857142855,
+          "financial_accuracy": 0.4428571428571429,
+          "soft_match_accuracy": 0.6011904761904762,
+          "perfect_conversations": 0,
+          "perfect_rate": 0.0,
+          "avg_tokens_per_example": 25730.9,
+          "avg_tokens_per_turn": 7488.242857142856,
+          "avg_response_time_ms_per_example": 84023.08690547943,
+          "avg_response_time_ms_per_turn": 24441.283559515363
+        },
+        "by_turns": {
+          "numerical_accuracy": {
+            "1-2": 0.375,
+            "3-4": 0.5416666666666666,
+            "5+": 0.30952380952380953
+          },
+          "financial_accuracy": {
+            "1-2": 0.375,
+            "3-4": 0.5416666666666666,
+            "5+": 0.38095238095238093
+          },
+          "soft_match_accuracy": {
+            "1-2": 0.625,
+            "3-4": 0.6041666666666666,
+            "5+": 0.5476190476190476
+          },
+          "avg_tokens_per_turn": {
+            "1-2": 7953.625,
+            "3-4": 7108.0,
+            "5+": 7317.964285714286
+          },
+          "avg_response_time_ms": {
+            "1-2": 25068.60250234604,
+            "3-4": 24597.54665195942,
+            "5+": 22874.1194889659
+          }
+        },
+        "by_type2_question": {
+          "numerical_accuracy": {
+            "true": 0.3071428571428571,
+            "false": 0.55
+          },
+          "financial_accuracy": {
+            "true": 0.33571428571428574,
+            "false": 0.55
+          },
+          "soft_match_accuracy": {
+            "true": 0.33571428571428574,
+            "false": 0.8666666666666666
+          }
+        },
+        "by_non_numeric_values": {
+          "numerical_accuracy": {
+            "true": 0.29166666666666663,
+            "false": 0.5198412698412699
+          },
+          "financial_accuracy": {
+            "true": 0.29166666666666663,
+            "false": 0.5436507936507936
+          },
+          "soft_match_accuracy": {
+            "true": 0.41666666666666663,
+            "false": 0.7242063492063492
+          }
+        }
+      }
+    }
+  ]
+}

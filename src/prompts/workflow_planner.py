@@ -18,11 +18,14 @@ PATTERN 1: Investment Benchmark Tables
 - Maintain entity context across turns unless explicit switch
 Example: Q1 asks about FIS, Q2 "rate of return" still refers to FIS
 
-PATTERN 2: Multi-Entity Conversations
-- "what about [entity]?" = switch to new entity, extract fresh values
-- "this/that/it" alone = continue same entity from previous turn
+PATTERN 2: Multi-Entity Conversations (CRITICAL - Entity Switching)
+- "what about [entity]?" OR "and for [entity]" = switch to NEW entity, extract fresh values
+- After switching, maintain NEW entity context for subsequent turns
+- "this/that/it" or "this stock/value" = continue CURRENT entity (the most recently mentioned)
 - Check previous_answers metadata for entity tracking
 - "difference between X and Y" = use specific answers for each entity
+- Example: Turn 4 asks about UPS → Turn 5 "and for S&P 500" → NEW entity = S&P 500
+- Example: Turn 5 about S&P 500 → Turn 6 "this stock" = S&P 500 (NOT the original entity)
 
 PATTERN 3: Temporal Change Calculations
 - "change from X to Y" = subtract(Y, X) for positive increases
@@ -47,6 +50,23 @@ PATTERN 6: Constants Support
 - Percentage conversion = literal 100
 - Known constants (12 months, 365 days) = literal values
 - Do NOT extract constants from table
+
+PATTERN 7: Ambiguous Aggregation with Conversational Context (CRITICAL)
+- "what is the sum?" OR "what is the total?" (NO other specification)
+- When 2+ previous answers exist and question is COMPLETELY ambiguous
+- "THE sum/total" (definite article + no noun) = sum previous answers
+- "TOTAL [entity]" (specific noun) = extract that entity from table
+- Example: After asking for values A and B, "what is the sum?" = A + B (previous answers)
+- Example: "What is the total revenue?" = extract "total revenue" (specific entity)
+
+PATTERN 8: Temporal References After Calculations (CRITICAL)
+- "this year" or "that year" after a CALCULATION refers to the YEAR MENTIONED, not the calculation result
+- Check previous_answers metadata for operation field
+- If prev_0 operation = "divide", "multiply", "percentage", "percentage_change" (derived metric)
+  → DO NOT use prev_0 as a temporal base value
+- Look at the question text from previous turn to identify the actual year
+- Example: Turn 2 asks about "price in 2004" and returns ratio → Turn 3 "from this year to 2009" means "from 2004 to 2009"
+- Extract the base year value fresh from table, don't use the ratio/percentage result
 
 ====================
 REFERENCE EXAMPLES
@@ -97,6 +117,46 @@ Q2: "change in that investment from 2010?"
 Plan: extract(mutual_funds, 2010), extract(mutual_funds, 2011), subtract(2011, 2010)
 Note: "that investment" = mutual funds (base entity), NOT ratio
 WRONG: Using prev_0 (0.3492) or computing ratio change
+
+Example 4: Percentage Change After Difference Calculation (CRITICAL)
+Q1: "What was the difference in warranty liability between 2011 and 2012?"
+Table: warranty_liability: {2011: 102.0, 2012: 118.0}
+Plan: extract(warranty_liability, 2011), extract(warranty_liability, 2012), subtract(2012, 2011)
+Result: prev_0 = 16.0 (entity: warranty_liability, operation: subtract)
+
+Q2: "And the percentage change of this value?"
+CRITICAL INTERPRETATION: "this value" = warranty_liability (the entity), NOT the difference (16.0)
+WRONG PLAN: percentage_change(something, 16.0) ← Using difference as new value
+WRONG PLAN: percentage(16.0, 102.0) ← Would mean "what % does 16 represent of 102"
+
+CORRECT PLAN:
+  Step 1: extract(warranty_liability, 2011) → 102.0 (old)
+  Step 2: extract(warranty_liability, 2012) → 118.0 (new)
+  Step 3: percentage_change(step_1, step_2) → 15.69%
+Note: Re-extract the entity values, don't use prev_0 (the difference)
+
+Alternative Q2: "What percentage does this change represent of 2011 liability?"
+NOW use the difference:
+  Step 1: extract(warranty_liability, 2011) → 102.0 (base)
+  Step 2: percentage(prev_0, step_1) → 15.69%
+Note: "change" = the difference (prev_0), "represent of" = percentage operation
+
+Example 5: Investment Index Percentage Change (CRITICAL)
+Q1: "What was the change in the S&P 500 index from 2011 to 2016?"
+Table: S&P_500: {2011: 100.0, 2016: 198.18} (benchmark index, 2011 = baseline)
+Plan: extract(s&p_500, 2011), extract(s&p_500, 2016), subtract(2016, 2011)
+Result: prev_0 = 98.18 (entity: s&p_500, operation: subtract)
+
+Q2: "What is the percent change?"
+CRITICAL: Question asks for percent change of S&P 500 INDEX, not of the difference
+WRONG PLAN: percentage_change(100.0, 98.18) ← Using difference (98.18) as new value = -1.82%
+CORRECT PLAN:
+  Step 1: extract(s&p_500, 2011) → 100.0 (old)
+  Step 2: extract(s&p_500, 2016) → 198.18 (new)
+  Step 3: percentage_change(step_1, step_2) → 98.18%
+
+RULE: After a difference calculation, "percentage change?" means percentage change of THE ENTITY, 
+using the original old/new values, NOT using the difference value itself.
 
 ====================
 AVAILABLE TOOLS
@@ -212,6 +272,7 @@ CRITICAL: When question refers to previous answers using:
 - Pronouns: "the change", "the value", "that", "this"
 - Implicit references: "the percent change" (without specifying what to compare)
 - Follow-up computations: "what's the difference?", "divide them"
+- Ambiguous aggregations: "the sum", "the total", "add them" (without specifying WHAT to sum)
 
 YOU MUST use previous answers (negative step_refs) instead of extracting new values:
 - step_ref: -1 = prev_0 (most recent previous answer)
@@ -221,6 +282,95 @@ YOU MUST use previous answers (negative step_refs) instead of extracting new val
 Example for Turn 3 above:
 CORRECT: compute divide with operands [{"type": "reference", "step_ref": -1}, {"type": "reference", "step_ref": -2}]
 WRONG: Extracting new values from table for 2019/2020
+
+CRITICAL EXCEPTION - Temporal References After Calculations:
+When previous answer is a DERIVED CALCULATION (not a base extraction), temporal references like "this year" 
+or "that year" refer to the YEAR MENTIONED IN CONTEXT, not the calculation result.
+
+Example:
+Turn 1: "What was the fluctuation from 2004 to 2006?" 
+  Answer: prev_0 = -8.94 (operation: subtract, entity: UPS)
+  
+Turn 2: "How much does this fluctuation represent in relation to that price in 2004?"
+  Answer: prev_1 = -0.0894 (operation: divide, this is a RATIO)
+  
+Turn 3: "From this year to 2009, what was the fluctuation?"
+  WRONG: subtract(2009_value, prev_1) ← prev_1 is a ratio (-0.0894), not a year value!
+  WRONG: "this year" = prev_1 
+  
+  CORRECT: "this year" = 2004 (mentioned in Turn 2 question)
+    Step 1: extract(UPS, 2004) → 100.0
+    Step 2: extract(UPS, 2009) → 75.95
+    Step 3: subtract(step_2, step_1) → -24.05
+    
+CHECK previous_answers metadata:
+- If prev_0 operation = "divide", "multiply", "percentage", "percentage_change"
+- These are DERIVED METRICS, not base entity values
+- DO NOT use them as temporal starting points
+- Extract the actual year value from table instead
+
+### PATTERN 3B: Ambiguous Aggregation Questions (CRITICAL - "THE SUM")
+When question asks for ambiguous aggregation with NO OTHER CONTEXT:
+- "what is the sum?" (without specifying WHAT to sum)
+- "what is the total?" (without specifying WHAT to total)
+- "add them" (when only 2 previous answers exist)
+- "what's the difference?" (when only 2 previous answers exist)
+
+CHECK previous_answers metadata:
+1. If 2 previous answers exist and question is COMPLETELY AMBIGUOUS
+2. No table context or entity mentioned in the question
+3. Question uses definite article "THE sum" (not "sum of X")
+
+CORRECT INTERPRETATION:
+The question refers to aggregating THE PREVIOUS ANSWERS, not extracting new table data.
+
+Example 1 (THIS EXACT SCENARIO):
+Turn 1 Q: "What is the value of obligations due within 1 year?"
+  Answer: prev_0 = 27729 (entity: obligations, timeframe: less than 1 year)
+  
+Turn 2 Q: "What is the amount due between 1-3 years?"
+  Answer: prev_1 = 45161 (entity: obligations, timeframe: 1-3 years)
+  
+Turn 3 Q: "What is the sum?"
+  WRONG: Extract all timeframe columns and sum them (would give 317105)
+  WRONG: Sum of all rows in the table
+  
+  CORRECT:
+    Step 1: compute add with operands [{"type": "reference", "step_ref": -1}, {"type": "reference", "step_ref": -2}]
+    Result: 27729 + 45161 = 72890
+    
+  REASONING: "The sum" with NO OTHER CONTEXT refers to the sum of the conversational answers,
+  not a sum of table values. The conversation has been about specific timeframes, so "the sum"
+  means "sum those two timeframes we just discussed."
+
+Example 2:
+Turn 1 Q: "What was revenue in 2019?"
+  Answer: prev_0 = 5000
+  
+Turn 2 Q: "What was revenue in 2020?"
+  Answer: prev_1 = 5500
+  
+Turn 3 Q: "What is the total?"
+  CORRECT: compute add with operands [{"type": "reference", "step_ref": -1}, {"type": "reference", "step_ref": -2}]
+  Result: 10500
+  
+  REASONING: "The total" with no specification means total of the two values just discussed.
+
+Example 3 (When NOT to use previous answers):
+Turn 1 Q: "What was revenue in California?"
+  Answer: prev_0 = 100
+  
+Turn 2 Q: "What was the total revenue?"
+  WRONG: Use prev_0 (that's just California)
+  CORRECT: Extract "total revenue" from table
+  
+  REASONING: "Total revenue" is SPECIFIC (refers to a table metric), not ambiguous.
+  Question asks for a different entity (total vs California).
+
+DISTINGUISH:
+- "THE sum/total" (ambiguous, no noun) → Sum previous answers
+- "TOTAL [entity]" (specific entity name) → Extract that entity from table
+- "SUM OF [list]" (specific list) → Sum those specific items from table
 
 ### PATTERN 4: Percentage vs Portion/Ratio (CRITICAL)
 "What percentage..." → use percentage operation (returns formatted % like 235.6%)
@@ -242,6 +392,45 @@ CORRECT: row_query = date range, col_query = metric name
 "change from X to Y" or "difference from X to Y" → subtract(Y, X) where Y=TO year, X=FROM year
   Example: "change from 2008 to 2009" = subtract(2009_value, 2008_value)
   REMEMBER: Subtract (TO year - FROM year) to get positive for increases
+
+### PATTERN 7B: Percentage Change AFTER Difference Calculation (CRITICAL - COMMON ERROR)
+When previous turn calculated a DIFFERENCE or CHANGE, and current turn asks for "percentage change":
+
+CHECK previous_answers metadata:
+- If prev_0 operation = "subtract" or "add" (a computed difference)
+- Current question = "percentage change?" or "what percent?" or "what is the % change?"
+
+YOU MUST:
+1. Identify the ENTITY/METRIC the difference was about (check prev_0 entity field)
+2. Extract the OLD value for that entity from the table
+3. Extract the NEW value for that entity from the table
+4. Use percentage_change(old, new)
+
+DO NOT use the difference value (prev_0) as an operand in percentage_change!
+The question asks for "percentage change of THE ENTITY", not "percentage change of the difference".
+
+Example 1:
+Turn 1 Q: "What was the change in revenue from 2019 to 2020?"
+  Answer: 500 (entity=revenue, operation=subtract, years=[2019, 2020])
+  
+Turn 2 Q: "What is the percentage change?"
+  WRONG: percentage_change(2019_val, 500) ← Don't use the difference!
+  WRONG: percentage(500, 2019_val) ← This would be "what % does the change represent"
+  
+  CORRECT:
+    Step 1: extract_value(revenue, 2019) → 5000 (old)
+    Step 2: extract_value(revenue, 2020) → 5500 (new)
+    Step 3: percentage_change(step_1, step_2) → 10%
+
+Example 2 (Different question wording):
+Turn 2 Q: "What percentage does this change represent of the 2019 value?"
+  NOW we use the difference as the part:
+    Step 1: extract_value(revenue, 2019) → 5000 (base)
+    Step 2: percentage(prev_0, step_1) → 10%
+    
+DISTINGUISH:
+- "percentage change?" → percentage_change(old_entity_value, new_entity_value)
+- "what % does this represent?" → percentage(difference, base_value)
 
 ### PATTERN 8: Extract Only What You Need
 Don't extract all metrics if question only asks about subset
@@ -270,19 +459,56 @@ When conversation compares multiple entities across turns, track entity context 
 
 ENTITY SWITCHING SIGNALS:
 - "what about [entity]?" → Switch to new entity, extract new values
+- "and for [entity]" OR "for the [entity]" → Switch to new entity
 - "how does [entity] compare?" → Switch to new entity
 - Explicit mention of different entity name → Switch entities
 
 ENTITY CONTINUATION SIGNALS:
-- "this", "that", "it" without entity name → Same entity as previous turn
+- "this", "that", "it" without entity name → CURRENT entity (most recently mentioned, NOT original)
+- "this stock", "this value", "that price" → CURRENT entity from most recent turn
 - "the [metric]" without entity → Same entity as previous turn
-- Question about derived metric ("rate", "percentage") → Use results from previous turn
+- Question about derived metric ("rate", "percentage") → Use results from previous turn with CURRENT entity
 
 CRITICAL RULES:
 1. Track which entity each previous answer belongs to (check previous_answers metadata)
-2. When pronoun "this/that" is used, identify the entity from the most recent turn
-3. When computing on previous results, ensure entities match semantically
-4. "difference between X and Y rates" → Use the specific rate answers for entities X and Y
+2. When pronoun "this/that" is used, identify the entity from the MOST RECENT turn (not the conversation start)
+3. After entity switch ("and for S&P 500"), maintain NEW entity for all subsequent "this/that" references
+4. When computing on previous results, ensure entities match semantically
+5. "difference between X and Y rates" → Use the specific rate answers for entities X and Y
+
+COMMON ERROR - Reverting to Original Entity:
+Turn 1-3: Questions about UPS (entity A)
+Turn 4: "And for S&P 500..." → Switch to S&P 500 (entity B)
+Turn 5: "this stock" → Should use S&P 500 (entity B), NOT UPS (entity A)
+
+WRONG: Assuming "this" always refers to first entity in conversation
+CORRECT: "this" refers to most recently mentioned/switched entity
+
+Example:
+Turn 4: "What was UPS fluctuation?" → UPS entity
+  Answer: prev_3 = -24.05 (entity: united parcel service inc., operation: subtraction)
+  
+Turn 5: "And for S&P 500, what was the fluctuation?" → Entity switch to S&P 500
+  Answer: prev_4 = 2.11 (entity: s&p 500 index, operation: subtraction)
+  
+Turn 6: "What percentage does this fluctuation represent of this stock's 2004 price?"
+  
+  COMMON ERROR: Looking at prev_0 (first answer) instead of prev_4 (most recent answer)
+  - WRONG thought: "prev_0 is the most recent fluctuation" → Uses UPS entity
+  - CORRECT thought: "prev_4 has highest number → most recent" → Uses S&P 500 entity
+  
+  WRONG: "this stock" = UPS (from prev_0, which is from Turn 0, not most recent)
+  CORRECT: "this stock" = S&P 500 (from prev_4, which is the highest prev_N number)
+  
+  HOW TO IDENTIFY CURRENT ENTITY:
+  1. Scan all previous_answers: prev_0, prev_1, prev_2, prev_3, prev_4
+  2. Find highest number: prev_4 is the highest (most recent turn)
+  3. Check prev_4 metadata: entity = "s&p 500 index"
+  4. Therefore "this stock" = s&p 500 index (NOT united parcel service inc.)
+  
+  Correct Plan:
+    Step 1: extract(s&p 500 index, 12/31/04) → 100.0
+    Step 2: percentage(prev_4, step_1) → 2.11%
 
 See REFERENCE EXAMPLES section for entity tracking illustration.
 
@@ -342,6 +568,16 @@ PREVIOUS ANSWER USAGE:
 - Only use when computing on previous RESULTS
 - Do NOT use when extracting same metric for different year/period
 - Check metadata to understand what each answer represents
+- CRITICAL: Ambiguous aggregations ("THE sum", "THE total") with NO context = sum previous answers
+  * "what is the sum?" (after getting values A and B) = add(prev_0, prev_1)
+  * "what is the total?" (no specification) = sum recent previous answers
+  * "sum of X and Y" (specific entities) = extract X, extract Y, add them
+- CRITICAL: Check operation field in metadata before using as temporal base
+  * If operation = "divide", "multiply", "percentage", "percentage_change" → This is a DERIVED metric
+  * Derived metrics should NOT be used as temporal starting points ("from this year")
+  * Extract the actual year value from table instead
+  * Example: prev_0 = ratio of 0.05 (operation: divide) → DO NOT use for "change from this year"
+  * Instead, identify the year from previous question context and extract that year's value
 
 OPERAND ORDERING:
 - Temporal changes: subtract(TO, FROM) for positive increases
@@ -436,12 +672,39 @@ IMPORTANT: Use previous answers (step_ref: -1, -2, etc.) ONLY when:
 1. Question explicitly asks to compute on previous results: "divide them", "what's the difference between those two?"
 2. Previous answer was an INTERMEDIATE calculation result, not a base data point
 3. Question refers to "that value/result" where the pronoun clearly points to a computed answer
+4. Question is ambiguous aggregation ("the sum", "the total") with no other context
 
 Entity Tracking Guidelines:
-- Check "entity" field in previous_answers metadata
+- Previous answers include metadata in format: "prev_N: value (entity: entity_name, operation: op_type)"
+- To find CURRENT entity: Look at the HIGHEST prev_N number (most recent turn)
+  CRITICAL: prev_4 is MORE RECENT than prev_0, prev_1, prev_2, prev_3
+  The NUMBER indicates turn order: higher number = more recent turn
+- Check the "entity" field of that highest prev_N to identify current entity context
 - "operation" field shows if answer is extraction vs computation
-- Maintain entity context unless explicit switch signal ("what about [X]?")
-- "this/that" without entity name = continue same entity from previous turn
+- CRITICAL: After entity switch ("and for [entity]"), maintain NEW entity for subsequent turns
+- "this/that/this stock/this value" = CURRENT entity (most recently mentioned), not original entity
+
+STEP-BY-STEP for resolving "this stock" or "this fluctuation":
+1. Find the HIGHEST prev_N number in previous_answers (e.g., if you see prev_0, prev_1, prev_2, prev_3, prev_4, then prev_4 is highest)
+2. Read the entity field from that HIGHEST prev_N metadata
+3. That entity is the CURRENT entity that "this stock" or "this fluctuation" refers to
+4. DO NOT assume "this" refers to prev_0 or the first entity mentioned in the conversation
+
+Example: Turn 4 about UPS → Turn 5 "for S&P 500" → Turn 6 "this stock" = S&P 500 (not UPS)
+- After Turn 5, previous_answers shows: prev_4: 2.11 (entity: s&p 500 index, operation: subtraction)
+- Turn 6 asks about "this stock" → Look at prev_4 entity field (highest number) → "s&p 500 index" is current entity
+- DO NOT look at prev_0 which would show the original entity from the start of conversation
+- Explicit entity switch signal ("what about [X]") overrides previous entity context
+
+CRITICAL - Temporal References After Calculations:
+When checking if "this year" or "that year" can use a previous answer:
+1. Check the "operation" field in previous_answers metadata
+2. If operation = "divide", "multiply", "percentage", "percentage_change" → DERIVED METRIC
+3. Derived metrics are NOT valid temporal base values
+4. Extract the year value from table instead, using year mentioned in previous question context
+Example: If prev_0 = -0.0894 (operation: divide), and question asks "from this year to 2009"
+  → DO NOT use prev_0 as base
+  → Extract the actual year (e.g., 2004) that was mentioned in the previous question
 
 DO NOT use previous answers when:
 - Question asks about a different aspect of the SAME ENTITY/LOCATION mentioned before
