@@ -230,32 +230,6 @@ The system leverages modern Python libraries optimized for reliability, type saf
 - **Coverage**: 85%+ test coverage across core components
 - **Features**: Fixtures for consistent test data, parametrized tests for edge cases
 
-#### Notable Exclusions
-
-**Why No LangGraph/LangChain?**  
-While LangGraph excels at complex multi-agent workflows with cycles and state persistence, ConvFinQA's deterministic execution model doesn't require its features:
-
-**What LangGraph Provides:**
-- **Persistent State Across Sessions**: Checkpointing to resume conversations after crashes
-- **Dynamic Tool Routing**: Runtime selection of tools based on LLM decisions
-- **Cyclic Workflows**: Loops and conditional branching (e.g., retry until valid)
-- **Multi-Agent Coordination**: State sharing between multiple autonomous agents
-
-**Why We Don't Need It:**
-- **State Persistence**: Our state is conversation-scoped (single session). Multi-turn memory is managed in-process via Python dictionaries (`previous_answers`). No need for external databases or checkpointing since conversations are ephemeral.
-- **Fixed Pipeline**: We use a deterministic planner → validator → executor flow. No dynamic routing needed.
-- **Linear Execution**: Our state machine has no cycles—validation loops are handled explicitly in code, not via graph traversal.
-- **Single Agent**: One planner orchestrates all tools. No agent collaboration or parallel execution required.
-
-**Trade-off Analysis:**
-- ✅ **Simpler Architecture**: Native Python is easier to debug than graph-based abstractions
-- ✅ **Full Control**: Direct access to execution flow without framework constraints
-- ✅ **Fewer Dependencies**: Reduced attack surface and faster installation
-- ❌ **Manual State Management**: We implement memory tracking ourselves (acceptable for our use case)
-- ❌ **No Built-in Persistence**: Cannot resume conversations across process restarts (not a requirement for ConvFinQA)
-
-The decision to use **native Python orchestration** reduces dependencies, improves debuggability, and maintains full control over execution flow—critical for a financial system where auditability trumps framework convenience.
-
 ### 3.4 Key Components
 
 #### 1. The Workflow Planner 
@@ -462,6 +436,68 @@ The Judge is prompted not to check the math (which is handled by the Workflow Ex
 - **Unit/Scale Verification**: Detects if the extracted float contradicts the document's scale (e.g., extracting "155" when the text specifies "billions").
 - **Respectively List Alignment**: Verifies that values pulled from a prose list match their intended labels.
 
+### 3.4.5 LangGraph Integration (FinancialAgentV2)
+
+To demonstrate industry-standard framework integration and address potential criticisms about framework choices, we provide **FinancialAgentV2** - a LangGraph-native implementation that wraps the existing components in a declarative state machine.
+
+#### Why LangGraph?
+
+While the native FinancialAgent implementation prioritizes **clarity and directness** (imperative control flow with explicit retry loops), LangGraph offers **declarative orchestration** benefits:
+
+- **State Management**: Centralized state schema with automatic accumulation across retries
+- **Visual Debugging**: Graph visualization for complex workflows
+- **Conditional Routing**: Declarative edge functions instead of nested conditionals
+- **Industry Standard**: Demonstrates familiarity with modern orchestration frameworks
+
+#### Architecture Comparison
+
+| Aspect | FinancialAgent (Native) | FinancialAgentV2 (LangGraph) |
+|--------|------------------------|------------------------------|
+| **Control Flow** | Imperative loops with explicit retry logic | Declarative graph with conditional edges |
+| **State Management** | Instance variables and method parameters | TypedDict with Annotated accumulation |
+| **Retry Logic** | Manual loop counters and feedback formatting | Graph edges with max attempt limits |
+| **Debugging** | Print statements and logging | Graph visualization + state inspection |
+| **Performance** | Minimal overhead | ~5-10% LangGraph orchestration overhead |
+| **Code Complexity** | Straightforward imperative flow | Graph construction + node functions |
+
+#### Graph Structure
+
+```
+START
+  ↓
+[plan_generation] ──────────────────┐
+  ↓                                  │
+[validation] ← (retry with feedback)┘
+  ↓
+[execution]
+  ↓
+[judge_audit] ← (retry if needed)
+  ↓
+END
+```
+
+**Key Features:**
+- **Conditional Edges**: `should_validate()`, `validation_router()`, `should_judge()`, `judge_router()`
+- **State Accumulation**: Validation/judge critiques accumulate across retries using `operator.add`
+- **Max Retry Limits**: Validation (3 attempts), Judge (2 attempts)
+- **Same Interface**: Drop-in replacement with identical `run_turn()` and `run_conversation()` methods
+
+#### Trade-off Analysis
+
+**Advantages of LangGraph:**
+- Declarative workflow definition
+- Built-in state persistence and inspection
+- Framework ecosystem integration
+- Visual graph debugging tools
+
+**Advantages of Native Implementation:**
+- Zero framework overhead
+- Direct imperative control
+- Easier debugging and modification
+- Minimal dependencies
+
+**Recommendation**: Use FinancialAgentV2 for production deployments requiring framework standardization, or FinancialAgent for maximum performance and simplicity.
+
 ### 3.5 Testing & Quality Assurance
 
 The system includes a comprehensive test suite covering both unit and integration tests to ensure correctness, reliability, and maintainability. The test suite is organized into six categories: (1) **Model validation tests** verify Pydantic schema enforcement and field requirements for all workflow components, (2) **Validator tests** ensure the WorkflowValidator correctly identifies logical errors like forward references, invalid operand counts, and non-sequential step IDs, (3) **Table normalization tests** validate year detection, orientation detection, and metric-to-year transposition, (4) **Table tool tests** cover fuzzy matching algorithms, similarity thresholds, and extraction error handling, (5) **Executor integration tests** verify all arithmetic operations, memory persistence, and conversation history handling, and (6) **End-to-end integration tests** validate complete agent workflows including validation loops, judge auditing, and multi-turn conversations. The test suite achieves over 85% code coverage across core components and uses pytest fixtures for consistent test data, enabling rapid regression testing and confident refactoring during development.
@@ -610,6 +646,7 @@ Step 3: percentage_change(1180, 1245) = 5.5%
 ### 5.5 Comparison to Baselines
 
 **TODO**
+
 ---
 
 ## 6. Error Analysis
@@ -618,47 +655,11 @@ Step 3: percentage_change(1180, 1245) = 5.5%
 
 Based on sample testing, errors fall into three categories:
 
-#### Category 1: Extraction Errors
-
-**Symptoms**: Correct plan logic, but wrong data extracted
-
-**Root Causes**:
-- Fuzzy match selects wrong row/column
-- Year format mismatch not caught by normalization
-- Complex table structures (nested headers, merged cells)
-
-**Mitigation Strategies**:
-- Increase similarity threshold for high-confidence matches
-- Enhance year normalization with more format variants
-- Add validation checks for common row name patterns
-
-#### Category 2: Planning Errors
-
-**Symptoms**: Wrong operation or reference selected
-
-**Root Causes**:
-- Ambiguous pronoun not covered by pattern rules
-- Complex multi-entity question requiring new pattern
-- Edge case in financial terminology
-
-**Mitigation Strategies**:
-- Expand pattern library with more linguistic variations
-- Add few-shot examples for ambiguous constructions
-- Implement clarification prompts for low-confidence plans
-
-#### Category 3: Text Extraction Errors
-
-**Symptoms**: LLM fails to locate value in prose
-
-**Root Causes**:
-- Compelex list ordering
-- Multiple values with similar context
-- Value embedded in complex sentence structure
-
-**Mitigation Strategies**:
-- Two-stage extraction: (1) locate sentence, (2) extract value
-- Explicit list index handling in prompt
-- Structured parsing for enumerated lists
+| Category | Error Type | Symptoms | Root Causes | Mitigation Strategies |
+|----------|------------|----------|-------------|----------------------|
+| **1** | **Extraction Errors** | Correct plan logic, but wrong data extracted | • Fuzzy match selects wrong row/column<br>• Year format mismatch not caught by normalization<br>• Complex table structures (nested headers, merged cells) | • Increase similarity threshold for high-confidence matches<br>• Enhance year normalization with more format variants<br>• Add validation checks for common row name patterns |
+| **2** | **Planning Errors** | Wrong operation or reference selected | • Ambiguous pronoun not covered by pattern rules<br>• Complex multi-entity question requiring new pattern<br>• Edge case in financial terminology | • Expand pattern library with more linguistic variations<br>• Add few-shot examples for ambiguous constructions<br>• Implement clarification prompts for low-confidence plans |
+| **3** | **Text Extraction Errors** | LLM fails to locate value in prose | • Complex list ordering<br>• Multiple values with similar context<br>• Value embedded in complex sentence structure | • Two-stage extraction: (1) locate sentence, (2) extract value<br>• Explicit list index handling in prompt<br>• Structured parsing for enumerated lists |
 
 ### 6.2 Failure Rate by Question Complexity
 
@@ -667,6 +668,8 @@ Based on sample testing, errors fall into three categories:
 ## 7. Future Work
 
 ### 7.1 Enhancements
+
+**WIP**
 
 1. **Cross-Validation Layer**: Compare table and text sources for the same metric, flag discrepancies for human review.
 
@@ -745,39 +748,9 @@ The ConvFinQA challenge required not just high accuracy, but also the ability to
 
 ## 10. Use of AI Coding Assistants
 
-### Tools Used
+This solution was developed with assistance from **Claude (via Cursor IDE)** for productivity enhancements including boilerplate code generation (Pydantic models, type hints, docstrings, test scaffolding), refactoring (extracting common patterns, improving error handling), and documentation (inline comments, README structure). 
 
-This solution was developed with assistance from **Claude (via Cursor IDE)** for the following purposes:
-
-1. **Code Generation**:
-   - Boilerplate code for Pydantic models
-   - Type hint suggestions
-   - Docstring generation
-   - Test case scaffolding
-
-2. **Refactoring**:
-   - Extracting common patterns into utility functions
-   - Improving error handling patterns
-
-3. **Documentation**:
-   - Inline code comments
-   - README structure
-
-### What Was NOT AI-Generated
-
-1. **Core Architecture**: The Planner-Executor pattern and register memory design were manually designed based on Neuro-Symbolic AI research.
-
-2. **Critical Pattern Rules**: These were manually distilled from systematic failure analysis on the ConvFinQA dataset.
-
-3. **Prompt Engineering**: The `WORKFLOW_PLANNER_SYSTEM_PROMPT` was iteratively refined through manual testing, not AI-generated.
-
-4. **Error Analysis**: All failure categorization and mitigation strategies are based on manual debugging sessions.
-
-5. **Design Decisions**: The architecture decision matrix and approach rationale were manually reasoned.
-
-### Disclosure Rationale
-
-AI was used for productivity enhancements, and boilerplate code generation. All **critical design decisions**, **algorithmic logic**, and **problem-solving strategies** were human-driven.
+However, all critical design decisions, algorithmic logic, and problem-solving strategies were made by me, including the core Planner-Executor architecture, rationale, pattern recognition rules distilled from ConvFinQA failure analysis, iterative prompt engineering through manual testing, systematic error categorization and mitigation strategies. 
 ---
 
 **Document Version**: 1.0  
