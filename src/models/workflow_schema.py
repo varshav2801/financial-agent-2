@@ -220,13 +220,39 @@ class WorkflowResult(BaseModel):
     )
 
 
+class StepCritique(BaseModel):
+    """Structured critique for a workflow step validation issue"""
+    model_config = ConfigDict(extra="forbid")
+    
+    step_id: Optional[int] = Field(
+        None,
+        description="Step ID where the issue was found (None for plan-level issues)"
+    )
+    issue_type: str = Field(
+        description="Type of issue: ReferenceError, ForwardReference, MissingParams, InvalidOperandCount, EmptyPlan, etc."
+    )
+    reason: str = Field(
+        description="Why this is an issue - detailed explanation of what's wrong"
+    )
+    fix_suggestion: str = Field(
+        description="How to fix the issue - actionable steps to resolve it"
+    )
+
+
 class ValidationResult(BaseModel):
     """Result of plan validation"""
     model_config = ConfigDict(extra="forbid")
     
     is_valid: bool = Field(description="Whether the plan is valid")
     confidence: float = Field(description="Confidence in validation (0.0-1.0)")
-    issues: List[str] = Field(default_factory=list, description="List of validation issues found")
+    issues: List[str] = Field(
+        default_factory=list,
+        description="Legacy: List of validation issues as strings (deprecated, use critiques)"
+    )
+    critiques: List[StepCritique] = Field(
+        default_factory=list,
+        description="Structured validation critiques with step_id, issue_type, reason, and fix_suggestion"
+    )
     failed_steps: List[int] = Field(default_factory=list, description="Step IDs that failed validation")
     failure_type: Optional[str] = Field(None, description="Type of validation failure")
     repair_instructions: Optional[str] = Field(None, description="Instructions for repairing the plan")

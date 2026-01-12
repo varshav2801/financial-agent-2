@@ -28,7 +28,8 @@ app = typer.Typer(
 def chat(
     record_id: str = typer.Argument(..., help="ID of the record to chat about"),
     verbose: bool = typer.Option(True, "--verbose/--no-verbose", help="Show detailed execution logs"),
-    enable_validation: bool = typer.Option(False, "--validation/--no-validation", help="Enable/disable validation"),
+    enable_validation: bool = typer.Option(False, "--validation/--no-validation", help="Enable/disable plan validation"),
+    enable_judge: bool = typer.Option(False, "--judge/--no-judge", help="Enable/disable post-execution judge audit"),
 ) -> None:
     """Ask questions about a specific record with detailed logging"""
     
@@ -42,13 +43,14 @@ def chat(
     record = load_record(record_id)
     
     console.print(f"[green]Loaded record with {record.features.num_dialogue_turns} conversation turns[/green]")
-    console.print(f"[dim]Validation: {'ENABLED' if enable_validation else 'DISABLED'}[/dim]\n")
+    console.print(f"[dim]Validation: {'ENABLED' if enable_validation else 'DISABLED'}[/dim]")
+    console.print(f"[dim]Judge: {'ENABLED' if enable_judge else 'DISABLED'}[/dim]\n")
     
     # Initialize agent
     from src.agent.agent import FinancialAgent
     import os
     model_name = os.getenv('MODEL_NAME', 'gpt-4o')
-    agent = FinancialAgent(model_name=model_name, enable_validation=enable_validation)
+    agent = FinancialAgent(model_name=model_name, enable_validation=enable_validation, enable_judge=enable_judge)
     
     # Run conversation through agent
     result = asyncio.run(agent.run_conversation(record))

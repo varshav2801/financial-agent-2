@@ -33,11 +33,15 @@ class QuickTestRunner:
         dataset_path: str,
         example_ids: List[str],
         model_name: str,
-        output_dir: str
+        output_dir: str,
+        enable_validation: bool = False,
+        enable_judge: bool = False
     ):
         self.dataset_path = dataset_path
         self.example_ids = example_ids
         self.model_name = model_name
+        self.enable_validation = enable_validation
+        self.enable_judge = enable_judge
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
@@ -76,6 +80,8 @@ class QuickTestRunner:
             raise ValueError("No valid examples found")
         
         console.print(f"[green]Found {len(self.examples)} examples to test[/green]")
+        console.print(f"[dim]Validation: {'ENABLED' if enable_validation else 'DISABLED'}[/dim]")
+        console.print(f"[dim]Judge: {'ENABLED' if enable_judge else 'DISABLED'}[/dim]")
         
         # Save test metadata
         metadata = {
@@ -145,7 +151,12 @@ class QuickTestRunner:
         
         # Initialize agent
         console.print(f"[cyan]Initializing agent with model: {self.model_name}...[/cyan]")
-        agent = FinancialAgent(model_name=self.model_name, enable_validation=False)
+        console.print(f"[dim]Validation: {'ENABLED' if self.enable_validation else 'DISABLED'}[/dim]")
+        agent = FinancialAgent(
+            model_name=self.model_name, 
+            enable_validation=self.enable_validation,
+            enable_judge=self.enable_judge
+        )
         console.print("[green]Agent initialized successfully[/green]\n")
         
         results = []
@@ -392,6 +403,16 @@ def main():
         action='store_true',
         help='Only test complex examples (4-5 turns or type2)'
     )
+    parser.add_argument(
+        '--validation',
+        action='store_true',
+        help='Enable plan validation with refinement loop'
+    )
+    parser.add_argument(
+        '--judge',
+        action='store_true',
+        help='Enable post-execution judge audit with refinement'
+    )
     
     args = parser.parse_args()
     
@@ -449,6 +470,7 @@ def main():
     console.print(f"[yellow]Dataset:[/yellow] {args.dataset}")
     console.print(f"[yellow]Model:[/yellow] {args.model}")
     console.print(f"[yellow]Examples:[/yellow] {len(example_ids)}")
+    console.print(f"[yellow]Validation:[/yellow] {'ENABLED' if args.validation else 'DISABLED'}")
     console.print(f"[yellow]Output Dir:[/yellow] {args.output_dir}\n")
     
     # Create runner and execute
@@ -457,7 +479,9 @@ def main():
             dataset_path=args.dataset,
             example_ids=example_ids,
             model_name=args.model,
-            output_dir=args.output_dir
+            output_dir=args.output_dir,
+            enable_validation=args.validation,
+            enable_judge=args.judge
         )
         
         result = runner.run_tests()
