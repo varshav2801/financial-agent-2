@@ -228,6 +228,16 @@ class TextTool:
         )
         llm_latency = (time.time() - llm_start) * 1000
         
+        # Validate response structure
+        if not response or not hasattr(response, 'choices') or not response.choices:
+            raise ValueError("Invalid LLM response: no choices returned")
+        
+        if not response.choices[0].message:
+            raise ValueError("Invalid LLM response: message is None")
+        
+        if not hasattr(response.choices[0].message, 'parsed') or response.choices[0].message.parsed is None:
+            raise ValueError("Invalid LLM response: parsed content is None")
+        
         # Log LLM call to tracker
         if self.tracker and hasattr(response, 'usage') and response.usage:
             self.tracker.log_llm_call(

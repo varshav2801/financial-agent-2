@@ -20,7 +20,7 @@ from rich.table import Table
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from src.agent.agent import FinancialAgent
+from src.agent.agent_v2 import FinancialAgentV2
 from src.models.dataset import Document, ConvFinQARecord, Dialogue, Features
 
 console = Console()
@@ -35,13 +35,17 @@ class BatchTestRunner:
         sample_size: int,
         seed: int,
         model_name: str,
-        output_dir: str
+        output_dir: str,
+        enable_validation: bool = False,
+        enable_judge: bool = True,
     ):
         self.dataset_path = dataset_path
         self.sample_size = sample_size
         self.seed = seed
         self.model_name = model_name
         self.output_dir = Path(output_dir)
+        self.enable_validation = enable_validation
+        self.enable_judge = enable_judge
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
         # Set random seed for reproducibility
@@ -80,6 +84,8 @@ class BatchTestRunner:
             'sample_size': len(self.examples),
             'seed': seed,
             'model_name': model_name,
+            'enable_validation': enable_validation,
+            'enable_judge': enable_judge,
             'sample_ids': sample_ids
         }
         
@@ -123,7 +129,7 @@ class BatchTestRunner:
     async def evaluate_example(
         self,
         example: Dict,
-        agent: FinancialAgent
+        agent: FinancialAgentV2
     ) -> Dict[str, Any]:
         """Evaluate a single example."""
         record = self._convert_to_record(example)
@@ -141,7 +147,11 @@ class BatchTestRunner:
         
         # Initialize agent
         console.print(f"[cyan]Initializing agent with model: {self.model_name}...[/cyan]")
-        agent = FinancialAgent(model_name=self.model_name, enable_validation=False)
+        agent = FinancialAgentV2(
+            model_name=self.model_name,
+            enable_validation=self.enable_validation,
+            enable_judge=self.enable_judge
+        )
         console.print("[green]Agent initialized successfully[/green]\n")
         
         results = []
@@ -414,6 +424,11 @@ def main():
         default=None,
         help='Directory to save results (default: batch_test_results_<model>_<timestamp>)'
     )
+    parser.add_argument(
+        '--validation',
+        action='store_true',
+        help='Enable plan validation'
+    )
     
     args = parser.parse_args()
     
@@ -431,6 +446,7 @@ def main():
     console.print(f"[yellow]Sample Size:[/yellow] {args.sample_size}")
     console.print(f"[yellow]Seed:[/yellow] {args.seed}")
     console.print(f"[yellow]Model:[/yellow] {args.model}")
+    console.print(f"[yellow]Validation:[/yellow] {'Enabled' if args.validation else 'Disabled'}")
     console.print(f"[yellow]Output Dir:[/yellow] {args.output_dir}\n")
     
     # Create runner and execute
@@ -440,7 +456,8 @@ def main():
             sample_size=args.sample_size,
             seed=args.seed,
             model_name=args.model,
-            output_dir=args.output_dir
+            output_dir=args.output_dir,
+            enable_validation=args.validation,
         )
         
         result = runner.run_batch()

@@ -1,216 +1,275 @@
 """
-Main typer app for ConvFinQA
+ConvFinQA Financial Agent - CLI
+
+Command-line interface for running and evaluating the financial QA agent.
 """
 
 import asyncio
-import json
+import os
+import sys
+from pathlib import Path
+from typing import Optional
+
 import typer
-from rich import print as rich_print
 from rich.console import Console
 from rich.panel import Panel
-from rich.json import JSON
 from rich.table import Table
-from src.utils.data_loader import load_record
+
 from src.logger import get_logger
+from src.utils.data_loader import load_record
 
 console = Console()
 logger = get_logger(__name__)
 
 app = typer.Typer(
-    name="main",
-    help="ConvFinQA Agent CLI",
+    name="convfinqa",
+    help="ConvFinQA Financial Agent",
     add_completion=True,
     no_args_is_help=True,
+    rich_markup_mode="rich",
 )
 
 
-@app.command()
-def chat(
-    record_id: str = typer.Argument(..., help="ID of the record to chat about"),
-    verbose: bool = typer.Option(True, "--verbose/--no-verbose", help="Show detailed execution logs"),
-    enable_validation: bool = typer.Option(False, "--validation/--no-validation", help="Enable/disable plan validation"),
-    enable_judge: bool = typer.Option(False, "--judge/--no-judge", help="Enable/disable post-execution judge audit"),
-) -> None:
-    """Ask questions about a specific record with detailed logging"""
-    
-    # Set log level to INFO for detailed output
+def _configure_logging(verbose: bool = True) -> None:
+    """Configure logging level based on verbosity setting."""
     import logging
-    import os
-    os.environ["LOG_LEVEL"] = "INFO"
-    logging.getLogger().setLevel(logging.INFO)
     
-    console.print(f"[cyan]Loading record: {record_id}[/cyan]")
-    record = load_record(record_id)
+    log_level = "INFO" if verbose else "WARNING"
+    os.environ["LOG_LEVEL"] = log_level
+    logging.getLogger().setLevel(getattr(logging, log_level))
+
+
+def _display_turn_results(
+    turn_idx: int,
+    total_turns: int,
+    question: str,
+    turn_result: dict,
+    expected: str,
+    expected_exec: str,
+    verbose: bool,
+) -> None:
+    """Display results for a single conversation turn."""
+    console.print(f"\n[bold yellow]{'─' * 80}[/bold yellow]")
+    console.print(f"[bold yellow]Turn {turn_idx + 1}/{total_turns}[/bold yellow]")
+    console.print(f"[bold yellow]{'─' * 80}[/bold yellow]")
+    console.print(f"\n[cyan]Question:[/cyan] {question}\n")
     
-    console.print(f"[green]Loaded record with {record.features.num_dialogue_turns} conversation turns[/green]")
-    console.print(f"[dim]Validation: {'ENABLED' if enable_validation else 'DISABLED'}[/dim]")
-    console.print(f"[dim]Judge: {'ENABLED' if enable_judge else 'DISABLED'}[/dim]\n")
-    
-    # Initialize agent
-    from src.agent.agent import FinancialAgent
-    import os
-    model_name = os.getenv('MODEL_NAME', 'gpt-4o')
-    agent = FinancialAgent(model_name=model_name, enable_validation=enable_validation, enable_judge=enable_judge)
-    
-    # Run conversation through agent
-    result = asyncio.run(agent.run_conversation(record))
-    
-    # Display results for each turn
-    for turn_idx, question in enumerate(record.dialogue.conv_questions):
-        console.print(f"\n[bold yellow]━━━ Turn {turn_idx + 1}/{len(record.dialogue.conv_questions)} ━━━[/bold yellow]")
-        console.print(f"[yellow]Question:[/yellow] {question}\n")
-        
-        # Get turn result from agent's conversation result
-        if turn_idx >= len(result.turn_results):
-            console.print(f"[red]Error: No result for turn {turn_idx + 1}[/red]")
-            break
-        
-        turn_result = result.turn_results[turn_idx]
-        
-        # Display plan if available
-        if turn_result.plan and verbose:
-            console.print("[bold cyan]📋 Generated Plan[/bold cyan]")
-            import json
-            console.print(json.dumps(turn_result.plan, indent=2))
-            console.print()
-        
-        # Display execution details
-        if verbose:
-            console.print("[bold cyan]⚙️  Execution[/bold cyan]")
-            console.print(f"Status: {'✅' if turn_result.success else '❌'}")
-            console.print(f"Time: {turn_result.response_time_ms:.1f}ms")
-            console.print(f"Tokens: {turn_result.total_tokens}")
-            if turn_result.error:
-                console.print(f"[red]Error: {turn_result.error}[/red]")
-            console.print()
-        
-        # Display answer
-        expected = record.dialogue.conv_answers[turn_idx]
-        expected_exec = record.dialogue.executed_answers[turn_idx]
-        
-        answer_text = str(turn_result.answer)
-        console.print(f"[blue]Assistant:[/blue] {answer_text}")
-        console.print(f"[dim]Expected: {expected} (executed: {expected_exec})[/dim]")
-        
-        # Display accuracy
-        if turn_result.numerical_accuracy == 1.0:
-            console.print("[green]✓ Correct! (Numerical)[/green]")
-        elif turn_result.financial_accuracy == 1.0:
-            console.print("[green]✓ Correct! (Financial - 1% tolerance)[/green]")
-        elif turn_result.soft_match_accuracy == 1.0:
-            console.print("[yellow]≈ Soft Match[/yellow]")
+    # Display plan if verbose
+    if verbose and turn_result.get("plan"):
+        import json
+        plan_data = turn_result["plan"]
+        if isinstance(plan_data, dict):
+            plan_text = json.dumps(plan_data, indent=2)
         else:
-            console.print(f"[red]✗ Incorrect[/red]")
+            plan_text = str(plan_data)
         
+        console.print(Panel(
+            plan_text,
+            title="[bold cyan]Generated Plan[/bold cyan]",
+            border_style="cyan",
+        ))
         console.print()
     
-    # Display overall conversation metrics
-    console.print(f"\n[bold cyan]{'='*80}[/bold cyan]")
+    # Display execution details
+    if verbose:
+        status = "✅ Success" if turn_result.get("success") else "❌ Failed"
+        table = Table(title="Execution Details", show_header=False, box=None)
+        table.add_column("Metric", style="dim")
+        table.add_column("Value", style="bold")
+        
+        table.add_row("Status", status)
+        table.add_row("Time", f"{turn_result.get('execution_time_ms', 0):.1f}ms")
+        
+        # Extract tokens from nested dict or top-level
+        tokens_info = turn_result.get("tokens", {})
+        total_tokens = tokens_info.get("total_tokens", turn_result.get("total_tokens", 0))
+        table.add_row("Tokens", str(total_tokens))
+        
+        if turn_result.get("error"):
+            table.add_row("Error", f"[red]{turn_result['error']}[/red]")
+        
+        console.print(table)
+        console.print()
+    
+    # Display answer and accuracy
+    answer_text = str(turn_result.get("answer", "N/A"))
+    console.print(f"[bold green]Answer:[/bold green] {answer_text}")
+    console.print(f"[dim]Expected: {expected} (executed: {expected_exec})[/dim]\n")
+    
+    # Display accuracy indicators
+    if turn_result.get("numerical_match"):
+        console.print("[green]✓ Correct (Numerical Match)[/green]")
+    elif turn_result.get("financial_match"):
+        console.print("[green]✓ Correct (Financial - 1% tolerance)[/green]")
+    elif turn_result.get("soft_match"):
+        console.print("[yellow]≈ Soft Match[/yellow]")
+    else:
+        console.print("[red]✗ Incorrect[/red]")
+
+
+def _display_conversation_summary(result: dict) -> None:
+    """Display overall conversation metrics."""
+    console.print(f"\n[bold cyan]{'═' * 80}[/bold cyan]")
     console.print("[bold cyan]Conversation Summary[/bold cyan]")
-    console.print(f"[bold cyan]{'='*80}[/bold cyan]\n")
-    console.print(f"Financial Accuracy: {result.financial_accuracy:.2%}")
-    console.print(f"All Correct: {result.all_correct}")
-    console.print(f"Correct Turns: {result.correct_turns}/{result.total_turns}")
-    console.print(f"Total Tokens: {result.total_tokens}")
-    console.print(f"Total Time: {result.total_response_time_ms:.1f}ms")
+    console.print(f"[bold cyan]{'═' * 80}[/bold cyan]\n")
+    
+    table = Table(show_header=False, box=None)
+    table.add_column("Metric", style="cyan", width=30)
+    table.add_column("Value", style="bold green", justify="right")
+    
+    table.add_row("Financial Accuracy", f"{result.get('financial_accuracy', 0):.2%}")
+    table.add_row("All Correct", str(result.get("all_correct", False)))
+    table.add_row("Correct Turns", result.get('correct_turns', '0/0'))  # Already formatted string
+    table.add_row("Total Tokens", f"{result.get('total_tokens', 0):,}")
+    table.add_row("Total Time", f"{result.get('total_response_time_ms', 0):.1f}ms")
+    
+    console.print(table)
     console.print()
 
 
 @app.command()
-def evaluate(
-    sample_size: int = typer.Option(100, "--sample-size", "-n", help="Total number of conversations to evaluate"),
-    seed: int = typer.Option(42, "--seed", help="Random seed for reproducibility"),
-    output_dir: str = typer.Option(None, "--output", "-o", help="Output directory (default: eval_runs/TIMESTAMP)"),
-    enable_validation: bool = typer.Option(False, "--validation/--no-validation", help="Enable/disable validation"),
+def chat(
+    example_id: str = typer.Argument(..., help="Example ID to test"),
+    model: str = typer.Option("gpt-5-mini", "--model", help="Model name"),
+    validator: bool = typer.Option(False, "--validator/--no-validator", help="Enable plan validation"),
+    verifier: bool = typer.Option(True, "--verifier/--no-verifier", help="Enable result verification"),
 ) -> None:
     """
-    Run batch evaluation with comprehensive metrics tracking
+    Test a specific record.
     
-    Outputs:
-      - summary.csv: High-level metrics per conversation
-      - turns.csv: Turn-by-turn detailed metrics
-      - validation.csv: All validator responses
-      - traces/{trace_id}.json: Detailed logs per conversation
-      - statistics.json: Aggregate statistics
+    Example:
+        uv run python -m src.main chat Single_JKHY/2009/page_28.pdf-3 --model gpt-5-mini
     """
-    from pathlib import Path
-    from datetime import datetime
-    from src.evaluation.runner import EvaluationRunner
+    from src.agent.agent_v2 import FinancialAgentV2
     
-    # Create timestamped output directory
-    if output_dir is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_dir = f"eval_runs/run_{timestamp}"
+    _configure_logging(True)
     
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
+    os.environ["MODEL_NAME"] = model
     
-    rich_print(f"[cyan]Starting evaluation run[/cyan]")
-    rich_print(f"[dim]Sample size: {sample_size}[/dim]")
-    rich_print(f"[dim]Random seed: {seed}[/dim]")
-    rich_print(f"[dim]Validation: {'ENABLED' if enable_validation else 'DISABLED'}[/dim]")
-    rich_print(f"[dim]Output directory: {output_path}[/dim]\n")
-    
-    # Run evaluation
-    runner = EvaluationRunner(output_path, enable_validation=enable_validation)
-    results = asyncio.run(runner.run_evaluation(
-        sample_size=sample_size,
-        random_seed=seed,
+    # Display configuration
+    console.print(Panel(
+        f"[cyan]Example ID:[/cyan] {example_id}\n"
+        f"[cyan]Model:[/cyan] {model}\n"
+        f"[cyan]Validator:[/cyan] {'Enabled' if validator else 'Disabled'}\n"
+        f"[cyan]Verifier:[/cyan] {'Enabled' if verifier else 'Disabled'}",
+        title="[bold]Configuration[/bold]",
+        border_style="cyan",
     ))
     
-    # Print summary
-    rich_print("\n[green]✓ Evaluation complete![/green]")
-    rich_print(f"[cyan]Results saved to:[/cyan] {output_path}\n")
-    
-    rich_print("[yellow]Summary Statistics:[/yellow]")
-    rich_print(f"  Total conversations: {results.total_conversations}")
-    rich_print(f"  Total turns: {results.total_turns}")
-    rich_print(f"  Numerical accuracy: [bold]{results.numerical_accuracy:.1%}[/bold]")
-    rich_print(f"  General accuracy: [bold]{results.general_accuracy:.1%}[/bold]")
-    rich_print(f"  Conversation-level accuracy: {results.conversation_level_accuracy:.1%}")
-    rich_print(f"  Error rate: {results.error_rate:.1%}")
-    rich_print(f"  Avg tokens per turn: {results.avg_tokens_per_turn:.1f}")
-    rich_print(f"  Avg latency per turn: {results.avg_latency_per_turn:.0f}ms")
-    
-    if results.error_types:
-        rich_print("\n[yellow]Error Distribution:[/yellow]")
-        for error_type, count in sorted(results.error_types.items(), key=lambda x: x[1], reverse=True):
-            rich_print(f"  {error_type}: {count}")
-    
-    rich_print(f"\n[dim]Run 'python -m src.main visualize {output_path}' to generate visualizations[/dim]")
+    try:
+        # Load record
+        console.print(f"\n[cyan]Loading record...[/cyan]")
+        record = load_record(example_id)
+        console.print(f"[green]✓ Loaded {record.features.num_dialogue_turns} conversation turns[/green]")
+        
+        # Initialize agent
+        console.print(f"[cyan]Initializing agent...[/cyan]")
+        agent = FinancialAgentV2(
+            model_name=model,
+            enable_validation=validator,
+            enable_judge=verifier,
+        )
+        console.print("[green]✓ Agent ready[/green]")
+        
+        # Run conversation
+        result = asyncio.run(agent.run_conversation(record))
+        
+        # Display turn results
+        for turn_idx, question in enumerate(record.dialogue.conv_questions):
+            if turn_idx >= len(result.turn_results):
+                console.print(f"[red]Error: No result for turn {turn_idx + 1}[/red]")
+                break
+            
+            turn_result = result.turn_results[turn_idx]
+            expected = record.dialogue.conv_answers[turn_idx]
+            expected_exec = record.dialogue.executed_answers[turn_idx]
+            
+            _display_turn_results(
+                turn_idx,
+                len(record.dialogue.conv_questions),
+                question,
+                turn_result.to_dict(),
+                expected,
+                expected_exec,
+                True,
+            )
+        
+        # Display summary
+        _display_conversation_summary(result.to_dict())
+        
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠ Interrupted by user[/yellow]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"\n[red]✗ Error: {str(e)}[/red]")
+        logger.exception("Chat command failed")
+        raise typer.Exit(1)
 
 
 @app.command()
-def list_records(
-    split: str = typer.Option("train", "--split", "-s", help="Dataset split: train, dev, or test"),
-    limit: int = typer.Option(10, "--limit", "-n", help="Number of record IDs to show"),
+def evaluate(
+    records: int = typer.Option(20, "--records", help="Number of records to test"),
+    model: str = typer.Option("gpt-5-mini", "--model", help="Model name"),
+    validator: bool = typer.Option(False, "--validator/--no-validator", help="Enable plan validation"),
+    verifier: bool = typer.Option(True, "--verifier/--no-verifier", help="Enable result verification"),
 ) -> None:
-    """List available record IDs in the dataset"""
-    import json
-    from pathlib import Path
+    """
+    Test a random N batch and save results.
     
-    data_path = Path(__file__).parent.parent / "data" / "convfinqa_dataset.json"
-    if not data_path.exists():
-        console.print(f"[red]Dataset not found at {data_path}[/red]")
-        return
+    Example:
+        uv run python -m src.main evaluate --records 20 --model gpt-5-mini
+    """
+    from datetime import datetime
+    from src.evaluation.batch_test import BatchTestRunner
     
-    with open(data_path, 'r') as f:
-        data = json.load(f)
+    os.environ["MODEL_NAME"] = model
     
-    if split not in data:
-        console.print(f"[red]Split '{split}' not found. Available: {list(data.keys())}[/red]")
-        return
+    # Generate output directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_safe = model.replace(":", "_").replace("/", "_").replace("-", "_")
+    output_dir = f"batch_test_results_{model_safe}_{timestamp}"
     
-    records = data[split]
-    console.print(f"[cyan]Found {len(records)} records in '{split}' split[/cyan]")
-    console.print(f"[dim]Showing first {min(limit, len(records))} record IDs:[/dim]\n")
+    # Display configuration
+    console.print(Panel(
+        f"[cyan]Records:[/cyan] {records}\n"
+        f"[cyan]Model:[/cyan] {model}\n"
+        f"[cyan]Validator:[/cyan] {'Enabled' if validator else 'Disabled'}\n"
+        f"[cyan]Verifier:[/cyan] {'Enabled' if verifier else 'Disabled'}\n"
+        f"[cyan]Output:[/cyan] {output_dir}",
+        title="[bold]Batch Evaluation[/bold]",
+        border_style="cyan",
+    ))
     
-    for i, record in enumerate(records[:limit]):
-        num_turns = record.get('features', {}).get('num_dialogue_turns', '?')
-        console.print(f"  {i+1}. {record['id']} ({num_turns} turns)")
-    
-    if len(records) > limit:
-        console.print(f"\n[dim]... and {len(records) - limit} more records[/dim]")
+    try:
+        # Create and run batch test
+        console.print(f"\n[cyan]Initializing batch test runner...[/cyan]")
+        runner = BatchTestRunner(
+            dataset_path="data/convfinqa_dataset.json",
+            sample_size=records,
+            seed=42,
+            model_name=model,
+            output_dir=output_dir,
+            enable_validation=validator,
+            enable_judge=verifier,
+        )
+        
+        result = runner.run_batch()
+        
+        # Display summary
+        runner.print_summary(result["metrics"])
+        
+        console.print(f"\n[bold green]{'═' * 80}[/bold green]")
+        console.print("[bold green]Evaluation Complete[/bold green]")
+        console.print(f"[bold green]{'═' * 80}[/bold green]\n")
+        console.print(f"[green]✓ Results saved to: {output_dir}[/green]\n")
+        
+    except KeyboardInterrupt:
+        console.print("\n[yellow]⚠ Evaluation interrupted by user[/yellow]")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"\n[red]✗ Error: {str(e)}[/red]")
+        logger.exception("Evaluation command failed")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

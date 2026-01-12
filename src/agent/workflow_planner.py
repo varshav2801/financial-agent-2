@@ -141,6 +141,16 @@ Ensure the new plan resolves these specific failures while maintaining logical s
             )
             logger.debug("LLM response received")
             
+            # Validate response structure
+            if not response or not hasattr(response, 'choices') or not response.choices:
+                raise ValueError("Invalid LLM response: no choices returned")
+            
+            if not response.choices[0].message:
+                raise ValueError("Invalid LLM response: message is None")
+            
+            if not hasattr(response.choices[0].message, 'parsed') or response.choices[0].message.parsed is None:
+                raise ValueError("Invalid LLM response: parsed content is None")
+            
             plan = response.choices[0].message.parsed
             
             elapsed_ms = (time.time() - start_time) * 1000

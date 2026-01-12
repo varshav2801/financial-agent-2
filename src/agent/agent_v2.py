@@ -114,15 +114,15 @@ async def validation_node(state: AgentState) -> Dict[str, Any]:
     logger.info("[VALIDATION_NODE] Validating plan structure...")
 
     validator = WorkflowValidator()
-    is_valid, critiques = validator.validate(state["plan"])
+    validation_result = validator.validate(state["plan"])
 
-    if is_valid:
-        logger.info("✓ Plan validation passed")
+    if validation_result.is_valid:
+        logger.info(f"✓ Plan validation passed: {len(state['plan'].steps)} steps")
         return {"validation_critiques": []}  # Empty list signals success
     else:
-        logger.warning(f"✗ Plan validation failed with {len(critiques)} issues")
+        logger.warning(f"✗ Plan validation failed with {len(validation_result.critiques)} issues")
         return {
-            "validation_critiques": critiques,
+            "validation_critiques": validation_result.critiques,
             "validation_retry_count": state.get("validation_retry_count", 0) + 1
         }
 
@@ -193,8 +193,8 @@ def should_validate(state: AgentState) -> Literal["validate", "execute"]:
 
     LangGraph Pattern: Conditional edges return the name of the next node.
     """
-    # Skip validation if disabled globally
-    if not Config.ENABLE_PLAN_VALIDATION:
+    # Skip validation if disabled
+    if not state.get("enable_validation", False):
         return "execute"
     return "validate"
 
@@ -224,8 +224,13 @@ def should_judge(state: AgentState) -> Literal["judge", END]:
     """
     Decide whether to audit execution with judge.
     """
+    enable_judge = state.get("enable_judge", False)
+    success = state.get("success")
+    
+    logger.info(f"[JUDGE_ROUTING] enable_judge={enable_judge}, success={success}")
+    
     # Skip judge if disabled or execution failed
-    if not Config.ENABLE_EXECUTION_JUDGE or not state.get("success"):
+    if not state.get("enable_judge", False) or not state.get("success"):
         return END
 
     return "judge"
@@ -366,7 +371,7 @@ class FinancialAgentV2:
         """
         self.model_name = model_name
         self.enable_validation = enable_validation
-        self.enable_judge = enable_judge and Config.ENABLE_EXECUTION_JUDGE
+        self.enable_judge = enable_judge
 
         # Compile the LangGraph workflow
         self.graph = create_financial_agent_graph()
@@ -416,7 +421,9 @@ class FinancialAgentV2:
                 "error": None,
                 "prompt_tokens": 0,
                 "completion_tokens": 0,
-                "execution_time_ms": 0.0
+                "execution_time_ms": 0.0,
+                "enable_validation": self.enable_validation,
+                "enable_judge": self.enable_judge
             }
 
             # Execute graph
@@ -505,10 +512,15 @@ class FinancialAgentV2:
         """
         from .agent import TurnResult  # Import here to avoid circular import
 
-        # Calculate accuracy metrics
+        # Calculate accuracy metrics using the corrected methods
         numerical_match = self._calculate_numerical_match(state.get("final_answer"), state.get("expected_answer"))
         financial_match = self._calculate_financial_match(state.get("final_answer"), state.get("expected_answer"))
         soft_match = self._calculate_soft_match(state.get("final_answer"), state.get("expected_answer"))
+
+        # Extract token counts from state (accumulated during execution)
+        prompt_tokens = state.get("prompt_tokens", 0)
+        completion_tokens = state.get("completion_tokens", 0)
+        total_tokens = prompt_tokens + completion_tokens
 
         return TurnResult(
             success=state.get("success", False),
@@ -523,48 +535,91 @@ class FinancialAgentV2:
             numerical_match=numerical_match,
             financial_match=financial_match,
             soft_match=soft_match,
-            prompt_tokens=state.get("prompt_tokens", 0),
-            completion_tokens=state.get("completion_tokens", 0),
-            total_tokens=state.get("prompt_tokens", 0) + state.get("completion_tokens", 0)
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens
         )
+
+    def _normalize_value(self, value: float | str) -> float:
+        """Convert value to float, handling percentages and formatting."""
+        if isinstance(value, (int, float)):
+            return float(value)
+        
+        # Remove common formatting
+        value_str = str(value).strip().replace(",", "").replace("$", "")
+        
+        # Handle percentage: convert to decimal
+        if "%" in value_str:
+            value_str = value_str.replace("%", "")
+            return float(value_str) / 100
+        
+        return float(value_str)
 
     def _calculate_numerical_match(self, answer: Optional[float], expected: Optional[str]) -> bool:
         """Calculate numerical accuracy (exact match after normalization)"""
         if answer is None or expected is None:
             return False
         try:
-            expected_float = float(expected.replace(',', '').replace('$', '').replace('%', ''))
-            return abs(answer - expected_float) < 0.01  # Allow small floating point differences
-        except (ValueError, AttributeError):
+            exp_val = self._normalize_value(expected)
+            act_val = float(answer)
+            epsilon = 1e-5
+            return abs(exp_val - act_val) < epsilon
+        except (ValueError, AttributeError, TypeError):
             return False
 
     def _calculate_financial_match(self, answer: Optional[float], expected: Optional[str]) -> bool:
-        """Calculate financial accuracy (handles millions/billions scaling)"""
+        """Calculate financial accuracy (1% tolerance, handles percentages)"""
         if answer is None or expected is None:
             return False
         try:
-            expected_float = float(expected.replace(',', '').replace('$', '').replace('%', ''))
-            # Check for exact match or scaled match (million vs billion)
-            return (
-                abs(answer - expected_float) < 0.01 or
-                abs(answer - expected_float / 1000) < 0.01 or  # million -> billion
-                abs(answer - expected_float * 1000) < 0.01     # billion -> million
-            )
-        except (ValueError, AttributeError):
+            exp_val = self._normalize_value(expected)
+            act_val = float(answer)
+            abs_diff = abs(exp_val - act_val)
+            epsilon = 1e-5
+            
+            # Direct match
+            if abs_diff < epsilon:
+                return True
+            
+            # 1% relative error tolerance
+            if exp_val != 0:
+                relative_error = abs_diff / abs(exp_val)
+                if relative_error <= 0.01:
+                    return True
+            
+            # Handle percentage format flexibility (10.1 vs 0.101)
+            if exp_val != 0:
+                scaled_exp = exp_val * 100
+                if abs(scaled_exp - act_val) / max(abs(scaled_exp), abs(act_val)) <= 0.01:
+                    return True
+            
+            if act_val != 0:
+                scaled_act = act_val * 100
+                if abs(exp_val - scaled_act) / max(abs(exp_val), abs(scaled_act)) <= 0.01:
+                    return True
+            
+            return False
+        except (ValueError, AttributeError, TypeError):
             return False
 
     def _calculate_soft_match(self, answer: Optional[float], expected: Optional[str]) -> bool:
-        """Calculate soft match (rounded to reasonable precision)"""
+        """Calculate soft match (more forgiving match)"""
         if answer is None or expected is None:
             return False
         try:
-            expected_float = float(expected.replace(',', '').replace('$', '').replace('%', ''))
-            # Allow 1% relative difference or 0.1 absolute difference
-            return (
-                abs(answer - expected_float) / max(abs(expected_float), 1) < 0.01 or
-                abs(answer - expected_float) < 0.1
-            )
-        except (ValueError, AttributeError):
+            exp_val = self._normalize_value(expected)
+            act_val = float(answer)
+            abs_diff = abs(exp_val - act_val)
+            
+            # 1% relative or 0.1 absolute
+            if exp_val != 0:
+                if abs_diff / abs(exp_val) < 0.01:
+                    return True
+            if abs_diff < 0.1:
+                return True
+            
+            return False
+        except (ValueError, AttributeError, TypeError):
             return False
 
 
@@ -579,5 +634,8 @@ def format_validation_feedback(critiques: list) -> str:
 
     feedback_lines = ["Previous plan had validation errors:"]
     for critique in critiques[-3:]:  # Last 3 critiques to avoid token explosion
-        feedback_lines.append(f"- {critique.get('issue_type', 'Unknown')}: {critique.get('reason', 'No reason provided')}")
+        # StepCritique is a Pydantic model, access attributes directly
+        issue_type = critique.issue_type if hasattr(critique, 'issue_type') else 'Unknown'
+        reason = critique.reason if hasattr(critique, 'reason') else 'No reason provided'
+        feedback_lines.append(f"- {issue_type}: {reason}")
     return "\n".join(feedback_lines)
