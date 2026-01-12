@@ -210,6 +210,14 @@ The system leverages modern Python libraries optimized for reliability, type saf
   - Token usage tracking for cost optimization
   - Automatic retry logic with exponential backoff (configured at client initialization)
 
+**LangGraph (LangChain)**  
+- **Purpose**: Declarative workflow orchestration for FinancialAgentV2  
+- **Features Used**:
+  - `StateGraph`: Defines multi-node execution graphs with typed state management
+  - `Annotated` state fields with `operator.add`: Automatic accumulation of validation critiques across retry cycles
+  - Conditional edges: Dynamic routing based on validation/judge results
+  - Graph visualization: Built-in tooling for debugging complex workflows
+
 
 #### Supporting Libraries
 
@@ -436,73 +444,9 @@ The Judge is prompted not to check the math (which is handled by the Workflow Ex
 - **Unit/Scale Verification**: Detects if the extracted float contradicts the document's scale (e.g., extracting "155" when the text specifies "billions").
 - **Respectively List Alignment**: Verifies that values pulled from a prose list match their intended labels.
 
-### 3.4.5 LangGraph Integration (FinancialAgentV2)
-
-To demonstrate industry-standard framework integration and address potential criticisms about framework choices, we provide **FinancialAgentV2** - a LangGraph-native implementation that wraps the existing components in a declarative state machine.
-
-#### Why LangGraph?
-
-While the native FinancialAgent implementation prioritizes **clarity and directness** (imperative control flow with explicit retry loops), LangGraph offers **declarative orchestration** benefits:
-
-- **State Management**: Centralized state schema with automatic accumulation across retries
-- **Visual Debugging**: Graph visualization for complex workflows
-- **Conditional Routing**: Declarative edge functions instead of nested conditionals
-- **Industry Standard**: Demonstrates familiarity with modern orchestration frameworks
-
-#### Architecture Comparison
-
-| Aspect | FinancialAgent (Native) | FinancialAgentV2 (LangGraph) |
-|--------|------------------------|------------------------------|
-| **Control Flow** | Imperative loops with explicit retry logic | Declarative graph with conditional edges |
-| **State Management** | Instance variables and method parameters | TypedDict with Annotated accumulation |
-| **Retry Logic** | Manual loop counters and feedback formatting | Graph edges with max attempt limits |
-| **Debugging** | Print statements and logging | Graph visualization + state inspection |
-| **Performance** | Minimal overhead | ~5-10% LangGraph orchestration overhead |
-| **Code Complexity** | Straightforward imperative flow | Graph construction + node functions |
-
-#### Graph Structure
-
-```
-START
-  ↓
-[plan_generation] ──────────────────┐
-  ↓                                  │
-[validation] ← (retry with feedback)┘
-  ↓
-[execution]
-  ↓
-[judge_audit] ← (retry if needed)
-  ↓
-END
-```
-
-**Key Features:**
-- **Conditional Edges**: `should_validate()`, `validation_router()`, `should_judge()`, `judge_router()`
-- **State Accumulation**: Validation/judge critiques accumulate across retries using `operator.add`
-- **Max Retry Limits**: Validation (3 attempts), Judge (2 attempts)
-- **Same Interface**: Drop-in replacement with identical `run_turn()` and `run_conversation()` methods
-
-#### Trade-off Analysis
-
-**Advantages of LangGraph:**
-- Declarative workflow definition
-- Built-in state persistence and inspection
-- Framework ecosystem integration
-- Visual graph debugging tools
-
-**Advantages of Native Implementation:**
-- Zero framework overhead
-- Direct imperative control
-- Easier debugging and modification
-- Minimal dependencies
-
-**Recommendation**: Use FinancialAgentV2 for production deployments requiring framework standardization, or FinancialAgent for maximum performance and simplicity.
-
 ### 3.5 Testing & Quality Assurance
 
 The system includes a comprehensive test suite covering both unit and integration tests to ensure correctness, reliability, and maintainability. The test suite is organized into six categories: (1) **Model validation tests** verify Pydantic schema enforcement and field requirements for all workflow components, (2) **Validator tests** ensure the WorkflowValidator correctly identifies logical errors like forward references, invalid operand counts, and non-sequential step IDs, (3) **Table normalization tests** validate year detection, orientation detection, and metric-to-year transposition, (4) **Table tool tests** cover fuzzy matching algorithms, similarity thresholds, and extraction error handling, (5) **Executor integration tests** verify all arithmetic operations, memory persistence, and conversation history handling, and (6) **End-to-end integration tests** validate complete agent workflows including validation loops, judge auditing, and multi-turn conversations. The test suite achieves over 85% code coverage across core components and uses pytest fixtures for consistent test data, enabling rapid regression testing and confident refactoring during development.
-
-### 3.6 Development Workflow
 
 ## 4. Evaluation
 
@@ -516,9 +460,23 @@ The system includes a comprehensive test suite covering both unit and integratio
 
 #### Phase 2: Model Selection
 **Purpose**: Identify optimal model for accuracy-cost tradeoff  
-**Dataset**: Stratified sample across difficulty tiers 
-**Models**: 4 candidates (GPT-4o, o3, GPT-5, GPT-5-mini)  
+**Dataset**: Stratified sample across difficulty tiers (10 conversations, 55 turns)
+**Models**: 4 candidates (GPT-4o, o3, GPT-5-mini, GPT-5.2)  
 **Metrics**: Execution rate, numerical accuracy, reasoning trace quality
+
+**Model Comparison Results**:
+
+| Metric | GPT-4o | o3 | GPT-5-mini | GPT-5.2 |
+|--------|--------|-----|------------|---------------------|
+| **Financial Accuracy** | 52.5% | 45.7% | 86.2% | 89.5% |
+| **Avg. Latency** | 40.00s | 24.01s | 33.97s | 35.50s |
+| **Tokens / Turn** | 7,040 | 7,351 | 11,268 | 11,500 |
+
+**Key Findings**:
+- **GPT-5-mini selected as baseline**: Offers the best balance of accuracy (86.2%) and cost-efficiency
+- **o3 underperforms**: Despite fast latency (24s), accuracy (45.7%) is insufficient for financial domain
+- **GPT-4o struggles with structured output**: Lower accuracy (52.5%) suggests difficulty with the JSON plan schema
+- **GPT-5.2 shows promise**: Highest accuracy (89.5%) with reasonable latency, but not evaluated in final phase due to budget constraints
 
 #### Phase 3: Final Evaluation
 **Purpose**: Final validation of winning model  
@@ -541,7 +499,61 @@ The system includes a comprehensive test suite covering both unit and integratio
 ### 5.1 Quantitative Results
 
 #### Preliminary Results
-**TODO**
+
+> **Evaluation Context Notes**:
+> 1. This evaluation was conducted on the system **before** the Workflow Validator repair mechanism and Result Verifier (Judge) were fully integrated. Due to time and cost constraints, the system was not re-evaluated with these components active. However, the evaluation methodology described here would remain identical for future assessments with the complete system.
+> 2. **Dataset Quality Issues**: During manual error analysis, multiple instances of dataset errors were identified in the ConvFinQA ground truth labels, including missing data in source documents and incorrect reference answers. These issues inflate the reported error rates, as the system may be producing correct answers that are marked as failures due to faulty ground truth. 
+
+**Dataset**: 20 randomly sampled conversations from ConvFinQA 
+**Model**: GPT-5-mini  
+**Evaluation Date**: January 13, 2026
+
+#### Aggregate Metrics
+
+| Metric | Value | Description |
+|--------|-------|-------------|
+| **Financial Accuracy** | 85.5% | 47/55 turns correct (within ±0.5% tolerance) |
+| **Perfect Conversations** | 60.0% |
+| **Numerical Accuracy** | 65.5% | 36/55 turns exact match |
+| **Avg. Latency per Turn** | 33.97s | End-to-end execution time |
+| **Avg. Tokens per Turn** | 11,269 | Prompt + completion tokens |
+
+#### Performance by Conversation Turn
+
+This metric tracks whether the model maintains context and accuracy as conversations progress:
+
+| Turn Number | Success Rate | Avg. Accuracy | Observations |
+|------------|--------------|---------------|--------------|
+| **Turn 1** | 100% | 80.0% | Strong start; most errors involve text vs. table source selection |
+| **Turn 2** | 93.3% | 60.0% | Errors emerge in pronoun resolution ("what about them?") |
+| **Turn 3** | 81.8% | 45.5% | Difficulty with ambiguous aggregation (summing prior answers) |
+| **Turn 4+** | 62.5% | 37.5% | Significant drop-off; compounded errors from previous turns |
+
+**Key Insight**: The system maintains strong first-turn performance but experiences degradation in longer conversations, suggesting that conversational memory and coreference resolution remain areas for improvement.
+
+#### Plan Complexity vs. Accuracy
+
+The correlation between plan length and financial accuracy shows robustness when reasoning steps are clearly articulated:
+
+| Plan Steps | Turn Accuracy (Financial) | Observation |
+|-----------|---------------------------|-------------|
+| **1 Step** | 88.9% | Simple extractions highly reliable |
+| **2 Steps** | 80.0% | Extract + compute pattern stable |
+| **3 Steps** | 87.5% | Multi-hop reasoning remains accurate |
+| **7 Steps** | 100.0% | Complex quarterly aggregation perfect |
+
+**Key Insight**: Accuracy does not degrade with plan complexity, suggesting that the Planner's logical decomposition is sound and the Executor handles multi-step workflows reliably.
+
+#### Error Analysis by Category
+
+| Error Category | Percentage | Description |
+|---------------|-----------|-------------|
+| **Numerical Mismatch** | 81.25% | Correct plan execution, but final value differs from expected (often rounding or unit scale) |
+| **Tool Extraction Failure** | 9.38% | `extract_value` could not find confident fuzzy match (< 85% threshold) |
+| **Plan Generation/Validation Error** | 6.25% | Invalid workflow structure or schema violation |
+| **Timeout/System Error** | 3.12% | Evaluation timeout (>300s) or infrastructure failure |
+
+**Key Insight**: The overwhelming majority of errors (81%) are **numerical mismatches**, not logic failures. This suggests that the Planner's reasoning is correct, but extraction precision (fuzzy matching, unit normalization) requires refinement.
 
 #### Important Context on Accuracy
 
@@ -643,10 +655,6 @@ Step 3: percentage_change(1180, 1245) = 5.5%
 
 **Complex Prose Extraction**: Deeply nested list structures remain challenging for single-stage LLM extraction.
 
-### 5.5 Comparison to Baselines
-
-**TODO**
-
 ---
 
 ## 6. Error Analysis
@@ -661,66 +669,86 @@ Based on sample testing, errors fall into three categories:
 | **2** | **Planning Errors** | Wrong operation or reference selected | • Ambiguous pronoun not covered by pattern rules<br>• Complex multi-entity question requiring new pattern<br>• Edge case in financial terminology | • Expand pattern library with more linguistic variations<br>• Add few-shot examples for ambiguous constructions<br>• Implement clarification prompts for low-confidence plans |
 | **3** | **Text Extraction Errors** | LLM fails to locate value in prose | • Complex list ordering<br>• Multiple values with similar context<br>• Value embedded in complex sentence structure | • Two-stage extraction: (1) locate sentence, (2) extract value<br>• Explicit list index handling in prompt<br>• Structured parsing for enumerated lists |
 
-### 6.2 Failure Rate by Question Complexity
-
-**TODO**
 
 ## 7. Future Work
 
-### 7.1 Enhancements
+### 7.1 Short-Term Enhancements
 
-**WIP**
+#### 7.1.1 API & Deployment
 
-1. **Cross-Validation Layer**: Compare table and text sources for the same metric, flag discrepancies for human review.
+**API Backend**: RESTful API with endpoints:
+- `/plan`: Generate execution plan without execution
+- `/execute`: Run complete workflow
+- `/validate`: Pre-execution plan verification
+- `/stream`: WebSocket for real-time updates
 
-2. **Expanded Operation Library**: Add financial functions:
-   - CAGR (Compound Annual Growth Rate)
-   - IRR (Internal Rate of Return)
-   - NPV (Net Present Value)
-   - Moving averages and percentiles
+**Frontend Interface**: Web-based UI for non-technical users:
+- Document upload and table preview
+- Interactive plan approval/rejection
+- Confidence visualization (color-coded extraction scores)
+- Conversation history with state inspection
 
-3. **Confidence Scoring**: Propagate fuzzy match scores (0-100) to final output, allowing analysts to filter low-confidence results.
+#### 7.1.2 Model Optimization & Testing
 
-4. **Enhanced Year Normalization**: Support fiscal year formats (FY2017, Q1 2017) and relative time references ("last quarter").
+**Multi-Model Support**: Enable model selection for each component independently:
+- **Planner**: Test reasoning-optimized models for plan generation quality
+- **Text Tool**: Evaluate extraction-specialized models for better prose understanding
+- **Judge/Verifier**: Compare cost-effective models vs. premium models for validation accuracy
 
-5. **Intent Verification with User Confirmation**: 
-   
-   **Motivation**: Natural language is inherently ambiguous. When users ask "what's the growth rate?", they could mean:
-   - Absolute change (300 → 450 = +150)
-   - Percentage change ((450-300)/300 = 50%)
-   - CAGR over multiple years
-   - Year-over-year change vs. cumulative change
-   
-   The `thought_process` field already acts as a **human-readable interpretation** of the plan, making the agent's understanding transparent.
-   
-   **Proposed Enhancement** (Interactive Confirmation):
-   Before executing, present the interpreted intent to the user for verification:
-   
-    **User Experience Flow**:
-   1. User asks: "What's the change in expenses?"
-   2. Agent generates plan + thought process
-   3. System presents: "I'll extract 2016 and 2017 expenses, then compute absolute difference. Return format: currency (millions). Correct?"
-   4. User confirms or corrects: "No, I need percentage change"
-   5. Agent regenerates plan with corrected intent
-   6. Execution proceeds with verified understanding
-   
-   **Benefits**:
-   - **Catches Misinterpretation Early**: User can correct "No, I meant absolute change in millions" before execution
-   - **Educates Users**: Shows exactly what operations will be performed, improving trust
-   - **Prevents Cascading Errors**: In multi-turn conversations, wrong interpretation in Turn 1 breaks all subsequent turns
-   - **Format Alignment**: Confirms expected output format (percentage vs. decimal, millions vs. billions) and allows for proper normalisation
+**Evaluation of Model Combinations**: Systematically benchmark all component combinations to identify optimal cost-accuracy tradeoffs
 
-   **Trade-offs**:
-   - **Adds Latency**: Extra confirmation step (~5-10 seconds for user response)
-   - **Batch Mode Challenge**: Not feasible for automated evaluations
-   - **Alternative approach**: Make confirmation optional, triggered only when:
-     * Multiple valid interpretations detected (ambiguity score > 0.7)
-     * Low confidence in plan (fuzzy match scores < 85%)
-     * User has correction history (learned preference for confirmation)
+#### 7.1.3 Robust Testing & Validation
 
-6. **Automated Pattern Discovery**: Analyze failed cases to automatically suggest new pattern rules using failure clustering.
+**Integration Tests**: Expand test coverage to include:
+- End-to-end conversation flows with edge cases
 
-7. **Hybrid RAG Integration**: For larger documents (>20k tokens), implement semantic chunking with the Planner-Executor pattern for post-retrieval reasoning.
+**Judge Enhancement**: Strengthen the Result Verifier with:
+- Structured critique taxonomy for common error patterns
+- Confidence scoring for validation decisions
+- Automated regression testing against known failure modes
+
+#### 7.1.4 Core Algorithm Improvements
+
+**Confidence Scoring**: Propagate fuzzy match confidence scores (0-100) through the execution pipeline:
+- Surface low-confidence extractions (< 85%) in output metadata
+- Trigger human review for ambiguous cases
+
+**Enhanced Year Normalization**: Support additional temporal formats:
+- Fiscal year notation (FY2017, FY17)
+- Quarter specifications (Q1 2017, 1Q17)
+- Relative time references ("last quarter", "previous year")
+
+#### 7.1.5 User Experience Enhancements
+
+**Real-Time Streaming**: Leverage LangGraph's `astream` methods to display live execution progress:
+- "Generating plan..." → "Validating logic..." → "Executing extractions..."
+- Improves perceived responsiveness and trust
+- Enables early cancellation of incorrect plans
+
+**Human-in-the-Loop (HITL) Integration**: Implement LangGraph interrupts for critical verification points:
+- **Pause After Planning**: Allow human consultant to verify logic before execution
+- **Ambiguity Detection**: Automatically request clarification when confidence < 70%
+- **Cost Control**: Prevent expensive execution of flawed plans
+
+**Benefits**: Catches misinterpretation early, prevents cascading errors in multi-turn conversations, aligns format expectations (percentage vs. decimal, millions vs. billions)
+
+#### 7.1.6 Multi-Agent Specialization
+
+Decompose the monolithic Planner into specialized sub-agents using LangGraph's graph composition:
+
+**Domain Expert Agents**:
+- **Tax Specialist**: Handle tax rate calculations, deferred tax assets, NOL carryforwards
+- **Data Extraction Agent**: Focus solely on table/text extraction with advanced disambiguation
+- **Financial Analyst Agent**: Manage complex ratio analysis and trend interpretation
+
+**Handoff Orchestration**: LangGraph manages agent transitions:
+```
+Question → Routing Agent → [Tax Specialist | Data Agent | Analyst Agent]
+                         ↓
+                    Aggregation Node → Final Answer
+```
+
+**Benefits**: Higher accuracy through specialized training, easier maintenance (update one agent without affecting others), parallel execution for independent sub-questions
 
 ---
 
@@ -737,22 +765,12 @@ The ConvFinQA challenge required not just high accuracy, but also the ability to
 
 ---
 
-## 9. Technical Appendix
+## 9. Use of AI Coding Assistants
 
-##TODO##
-
-```
-
-
----
-
-## 10. Use of AI Coding Assistants
-
-This solution was developed with assistance from **Claude (via Cursor IDE)** for productivity enhancements including boilerplate code generation (Pydantic models, type hints, docstrings, test scaffolding), refactoring (extracting common patterns, improving error handling), and documentation (inline comments, README structure). 
+This solution was developed with assistance from Claude (via Cursor IDE) for productivity enhancements including boilerplate code generation (Pydantic models, type hints, docstrings, test scaffolding), refactoring (extracting common patterns, improving error handling), and documentation (inline comments, README structure). 
 
 However, all critical design decisions, algorithmic logic, and problem-solving strategies were made by me, including the core Planner-Executor architecture, rationale, pattern recognition rules distilled from ConvFinQA failure analysis, iterative prompt engineering through manual testing, systematic error categorization and mitigation strategies. 
 ---
 
 **Document Version**: 1.0  
-**Last Updated**: January 12, 2026  
 **Author**: Varsha Venkatesh

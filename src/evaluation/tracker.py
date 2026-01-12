@@ -75,7 +75,7 @@ class MetricsTracker:
     ):
         """Track an LLM API call"""
         if self.current_turn is None:
-            logger.warning("log_llm_call called without active turn")
+            # Silently ignore - this can happen during planning between turns
             return
         
         call_log = LLMCallLog(
@@ -104,7 +104,7 @@ class MetricsTracker:
     ):
         """Track a tool call"""
         if self.current_turn is None:
-            logger.warning("log_tool_call called without active turn")
+            # Silently ignore - this can happen during planning between turns
             return
         
         tool_log = ToolCallLog(

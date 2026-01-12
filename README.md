@@ -1,65 +1,145 @@
-# ConvFinQA Assignment
+# FinQA Assistant - ConvFinQA Solution
 
+**A Neuro-Symbolic Financial Question Answering System**
 
-Thank you for taking the time to do this assignment! Please see the [main Notion page](https://tomoroai.notion.site/Technical-Assignment-1fa0de3387ea80debb36cda4ae41e93d) for the full instructions. 
+This solution implements a **Modular Planner-Executor** architecture for multi-turn financial question answering on the ConvFinQA dataset. The system decouples semantic understanding (LLM-based planning) from mathematical execution (deterministic Python), achieving:
 
+- **Zero Arithmetic Errors**: All calculations performed by symbolic Python engine
+- **Full Auditability**: Complete trace from answer to source document
+- **Cost Efficiency**: Optimized token usage via structured planning
+- **Production-Ready**: Type-safe schemas, comprehensive testing, error handling
 
-We have cleaned up the dataset; please see `dataset.md` for more information. We recommend you use this version of the data for the assignment, as it will save you a lot of time. If you have any questions, please don't hesitate to ask your point of contact. 
+The architecture features:
+- **Workflow Planner**: Converts natural language to structured JSON execution plans
+- **Workflow Validator**: Ensures logical consistency before execution
+- **Workflow Executor**: Deterministically executes plans with conversation memory
+- **Result Verifier**: Post-execution semantic validation
+- **Specialized Tools**: Fuzzy table extraction + LLM-guided text extraction
 
+**📄 For detailed implementation, architecture rationale, evaluation results, and future work, please see [REPORT.md](REPORT.md).**
 
-Good luck! 
+---
 
-## Get started
+## Quick Start
+
 ### Prerequisites
 - Python 3.12+
 - [UV environment manager](https://docs.astral.sh/uv/getting-started/installation/)
+- OpenAI API key
 
 ### Setup
 1. Clone this repository
-2. Use the UV environment manager to install dependencies:
+2. Install dependencies using UV:
 
 ```bash
-# install uv
+# Install UV package manager
 brew install uv
 
-# set up env
+# Install all dependencies
 uv sync
-
-# add python package to env
-uv add <package_name>
 ```
 
-### [optional] Use CLI to chat
+3. Set up your OpenAI API key:
 
-We have created a boilerplate cli app using [typer](https://typer.tiangolo.com/) (sister of fastapi, built on click) so there is a simple chat interface, which you can extend to meet your needs if you so choose.  By default the chat responds with a standard message as shown below.
-
-
-We've installed the app as a script, so you can run it with:
-```bash 
-uv run main
-```
-or you can use the longer form:
+**Option 1: Environment Variable (Recommended)**
 ```bash
-uv run python src/main.py
-```
+# Set for current session
+export OPENAI_API_KEY="your-api-key-here"
 
-How to *chat*:
+**Option 2: .env File**
 ```bash
-uv run main chat <record_id> 
+# Create a .env file in the project root (version3/)
+echo 'OPENAI_API_KEY=your-api-key-here' > .env
+
+# The system will automatically load it from .env
 ```
-[![Chat](figures/chat_example.png)](figures/chat.png)  
 
-## Submission 
-Please make a submission branch & make a PR to main. The PR should contain: 
+---
 
+## Usage
 
-- A solution to the main task
-- A report summarising your findings. We have sketched out a template for you in `REPORT.md`, but you can use any other setup (like LaTeX) if you prefer.
-- Please send a link to the PR to [recruitment@tomoro.ai](mailto:recruitment@tomoro.ai) with the subject `submission: <your name>`.
-  
-NOTE: Please DO NOT merge any of your submission to main, all of your work should be on your branch `submission`. 
+### Interactive Chat Interface
 
+Test a single conversation from the ConvFinQA dataset:
 
-**Please let us know if you used any AI tools to help generate code for your assignment.**
-Using AI-powered IDEs or coding assistants is acceptable, as these are commonly used in real-world environments, and this assignment is intended to reflect that. If you’ve used AI tools to help you write code or your report, or any other part of your process, we ask that you disclose how and where you used them. This isn’t to catch you out. It’s an opportunity to show that you understand how to use these tools effectively and responsibly as part of your workflow.
+```bash
+# Basic usage - chat with a specific conversation
+uv run python src/main.py chat <example_id>
+
+# Example with default settings
+uv run python src/main.py chat Single_JKHY/2009/page_28.pdf-3
+
+# With custom model
+uv run python src/main.py chat Single_JKHY/2009/page_28.pdf-3 --model gpt-5-mini
+
+# Enable validator and verifier (validation + result verification)
+uv run python src/main.py chat Single_JKHY/2009/page_28.pdf-3 --validator --verifier
+
+# Disable verifier (faster, but less accuracy checking)
+uv run python src/main.py chat Single_JKHY/2009/page_28.pdf-3 --no-verifier
+```
+
+**Available Options:**
+- `--model`: Model name (default: `gpt-5-mini`)
+- `--validator` / `--no-validator`: Enable/disable plan validation (default: disabled)
+- `--verifier` / `--no-verifier`: Enable/disable result verification (default: enabled)
+
+**Output includes:**
+- Document context (tables, pre-text, post-text)
+- Multi-turn conversation with generated plans
+- Step-by-step execution traces
+- Accuracy indicators (numerical match, financial match, soft match)
+- Per-turn metrics (tokens, execution time)
+
+### Batch Evaluation
+
+Evaluate on multiple conversations with comprehensive metrics:
+
+```bash
+# Evaluate on N random conversations
+uv run python src/main.py evaluate --records <N>
+
+# Example: Test 20 conversations with default model
+uv run python src/main.py evaluate --records 20
+
+# With custom model and validation/verification settings
+uv run python src/main.py evaluate --records 10 --model gpt-5-mini --validator --verifier
+
+# Fast evaluation (no validator, no verifier)
+uv run python src/main.py evaluate --records 5 --model gpt-5-mini --no-validator --no-verifier
+```
+
+**Available Options:**
+- `--records`: Number of conversations to test (default: 20)
+- `--model`: Model name (default: `gpt-5-mini`)
+- `--validator` / `--no-validator`: Enable/disable plan validation (default: disabled)
+- `--verifier` / `--no-verifier`: Enable/disable result verification (default: enabled)
+
+**Output Structure:**
+
+Results saved to `batch_test_results_<model>_<timestamp>/`
+- `results.json`: Per-turn detailed results with plans, traces, and accuracy
+- `aggregate_metrics.json`: Overall metrics (accuracy, latency, tokens)
+- `metadata.json`: Evaluation configuration
+
+## Documentation
+
+**For comprehensive documentation, please see [REPORT.md](REPORT.md)** which includes:
+- Architecture rationale and design decisions
+- Detailed component implementation
+- Evaluation methodology and results
+- Error analysis and future work
+
+Additional resources:
+- **[dataset.md](dataset.md)**: ConvFinQA dataset format and structure
+- **[tests/README.md](tests/README.md)**: Testing strategy and coverage
+
+---
+See [REPORT.md](REPORT.md) for detailed error analysis and qualitative results.
+
+---
+
+## License & Contact
+
+**Author**: Varsha Venkatesh 2025
 
