@@ -498,25 +498,22 @@ The system includes a comprehensive test suite covering both unit and integratio
 
 ### 5.1 Quantitative Results
 
-#### Preliminary Results
-
 > **Evaluation Context Notes**:
 > 1. This evaluation was conducted on the system **before** the Workflow Validator repair mechanism and Result Verifier (Judge) were fully integrated. Due to time and cost constraints, the system was not re-evaluated with these components active. However, the evaluation methodology described here would remain identical for future assessments with the complete system.
 > 2. **Dataset Quality Issues**: During manual error analysis, multiple instances of dataset errors were identified in the ConvFinQA ground truth labels, including missing data in source documents and incorrect reference answers. These issues inflate the reported error rates, as the system may be producing correct answers that are marked as failures due to faulty ground truth. 
 
 **Dataset**: 20 randomly sampled conversations from ConvFinQA 
 **Model**: GPT-5-mini  
-**Evaluation Date**: January 13, 2026
 
 #### Aggregate Metrics
 
-| Metric | Value | Description |
-|--------|-------|-------------|
-| **Financial Accuracy** | 85.5% | 47/55 turns correct (within ±0.5% tolerance) |
+| Metric | Value | 
+|--------|-------|
+| **Financial Accuracy** | 85.5% | 
 | **Perfect Conversations** | 60.0% |
-| **Numerical Accuracy** | 65.5% | 36/55 turns exact match |
-| **Avg. Latency per Turn** | 33.97s | End-to-end execution time |
-| **Avg. Tokens per Turn** | 11,269 | Prompt + completion tokens |
+| **Numerical Accuracy** | 65.5% |
+| **Avg. Latency per Turn** | 33.97s | 
+| **Avg. Tokens per Turn** | 11,269 | 
 
 #### Performance by Conversation Turn
 
@@ -525,7 +522,7 @@ This metric tracks whether the model maintains context and accuracy as conversat
 | Turn Number | Success Rate | Avg. Accuracy | Observations |
 |------------|--------------|---------------|--------------|
 | **Turn 1** | 100% | 80.0% | Strong start; most errors involve text vs. table source selection |
-| **Turn 2** | 93.3% | 60.0% | Errors emerge in pronoun resolution ("what about them?") |
+| **Turn 2** | 93.3% | 60.0% | Errors emerge in pronoun resolution ("..that year?") |
 | **Turn 3** | 81.8% | 45.5% | Difficulty with ambiguous aggregation (summing prior answers) |
 | **Turn 4+** | 62.5% | 37.5% | Significant drop-off; compounded errors from previous turns |
 
@@ -543,6 +540,16 @@ The correlation between plan length and financial accuracy shows robustness when
 | **7 Steps** | 100.0% | Complex quarterly aggregation perfect |
 
 **Key Insight**: Accuracy does not degrade with plan complexity, suggesting that the Planner's logical decomposition is sound and the Executor handles multi-step workflows reliably.
+
+#### Error Taxonomy
+
+Based on sample testing, errors fall into three categories:
+
+| Category | Error Type | Symptoms | Root Causes | Mitigation Strategies |
+|----------|------------|----------|-------------|----------------------|
+| **1** | **Extraction Errors** | Correct plan logic, but wrong data extracted | • Fuzzy match selects wrong row/column<br>• Year format mismatch not caught by normalization<br>• Complex table structures (nested headers, merged cells) | • Increase similarity threshold for high-confidence matches<br>• Enhance year normalization with more format variants<br>• Add validation checks for common row name patterns |
+| **2** | **Planning Errors** | Wrong operation or reference selected | • Ambiguous pronoun not covered by pattern rules<br>• Complex multi-entity question requiring new pattern<br>• Edge case in financial terminology | • Expand pattern library with more linguistic variations<br>• Add few-shot examples for ambiguous constructions<br>• Implement clarification prompts for low-confidence plans |
+| **3** | **Text Extraction Errors** | LLM fails to locate value in prose | • Complex list ordering<br>• Multiple values with similar context<br>• Value embedded in complex sentence structure | • Two-stage extraction: (1) locate sentence, (2) extract value<br>• Explicit list index handling in prompt<br>• Structured parsing for enumerated lists |
 
 #### Error Analysis by Category
 
@@ -657,24 +664,9 @@ Step 3: percentage_change(1180, 1245) = 5.5%
 
 ---
 
-## 6. Error Analysis
+## 6. Future Work
 
-### 6.1 Error Taxonomy
-
-Based on sample testing, errors fall into three categories:
-
-| Category | Error Type | Symptoms | Root Causes | Mitigation Strategies |
-|----------|------------|----------|-------------|----------------------|
-| **1** | **Extraction Errors** | Correct plan logic, but wrong data extracted | • Fuzzy match selects wrong row/column<br>• Year format mismatch not caught by normalization<br>• Complex table structures (nested headers, merged cells) | • Increase similarity threshold for high-confidence matches<br>• Enhance year normalization with more format variants<br>• Add validation checks for common row name patterns |
-| **2** | **Planning Errors** | Wrong operation or reference selected | • Ambiguous pronoun not covered by pattern rules<br>• Complex multi-entity question requiring new pattern<br>• Edge case in financial terminology | • Expand pattern library with more linguistic variations<br>• Add few-shot examples for ambiguous constructions<br>• Implement clarification prompts for low-confidence plans |
-| **3** | **Text Extraction Errors** | LLM fails to locate value in prose | • Complex list ordering<br>• Multiple values with similar context<br>• Value embedded in complex sentence structure | • Two-stage extraction: (1) locate sentence, (2) extract value<br>• Explicit list index handling in prompt<br>• Structured parsing for enumerated lists |
-
-
-## 7. Future Work
-
-### 7.1 Short-Term Enhancements
-
-#### 7.1.1 API & Deployment
+#### 6.1 API & Deployment
 
 **API Backend**: RESTful API with endpoints:
 - `/plan`: Generate execution plan without execution
@@ -688,7 +680,7 @@ Based on sample testing, errors fall into three categories:
 - Confidence visualization (color-coded extraction scores)
 - Conversation history with state inspection
 
-#### 7.1.2 Model Optimization & Testing
+#### 6.2 Model Optimization & Testing
 
 **Multi-Model Support**: Enable model selection for each component independently:
 - **Planner**: Test reasoning-optimized models for plan generation quality
@@ -697,7 +689,7 @@ Based on sample testing, errors fall into three categories:
 
 **Evaluation of Model Combinations**: Systematically benchmark all component combinations to identify optimal cost-accuracy tradeoffs
 
-#### 7.1.3 Robust Testing & Validation
+#### 6.3 Robust Testing & Validation
 
 **Integration Tests**: Expand test coverage to include:
 - End-to-end conversation flows with edge cases
@@ -707,7 +699,7 @@ Based on sample testing, errors fall into three categories:
 - Confidence scoring for validation decisions
 - Automated regression testing against known failure modes
 
-#### 7.1.4 Core Algorithm Improvements
+#### 6.4 Core Algorithm Improvements
 
 **Confidence Scoring**: Propagate fuzzy match confidence scores (0-100) through the execution pipeline:
 - Surface low-confidence extractions (< 85%) in output metadata
@@ -718,7 +710,7 @@ Based on sample testing, errors fall into three categories:
 - Quarter specifications (Q1 2017, 1Q17)
 - Relative time references ("last quarter", "previous year")
 
-#### 7.1.5 User Experience Enhancements
+#### 6.5 User Experience Enhancements
 
 **Real-Time Streaming**: Leverage LangGraph's `astream` methods to display live execution progress:
 - "Generating plan..." → "Validating logic..." → "Executing extractions..."
@@ -732,7 +724,7 @@ Based on sample testing, errors fall into three categories:
 
 **Benefits**: Catches misinterpretation early, prevents cascading errors in multi-turn conversations, aligns format expectations (percentage vs. decimal, millions vs. billions)
 
-#### 7.1.6 Multi-Agent Specialization
+#### 6.6 Multi-Agent Specialization
 
 Decompose the monolithic Planner into specialized sub-agents using LangGraph's graph composition:
 
@@ -752,7 +744,7 @@ Question → Routing Agent → [Tax Specialist | Data Agent | Analyst Agent]
 
 ---
 
-## 8. Conclusion
+## 7. Conclusion
 
 This project demonstrates that **Neuro-Symbolic architectures** are not just theoretical ideals—they are practical, production-ready solutions for high-stakes financial reasoning. By decoupling linguistic understanding (neural) from mathematical execution (symbolic), we achieve:
 
@@ -765,7 +757,7 @@ The ConvFinQA challenge required not just high accuracy, but also the ability to
 
 ---
 
-## 9. Use of AI Coding Assistants
+## 8. Use of AI Coding Assistants
 
 This solution was developed with assistance from Claude (via Cursor IDE) for productivity enhancements including boilerplate code generation (Pydantic models, type hints, docstrings, test scaffolding), refactoring (extracting common patterns, improving error handling), and documentation (inline comments, README structure). 
 

@@ -1,7 +1,5 @@
 # FinQA Assistant - ConvFinQA Solution
 
-**A Neuro-Symbolic Financial Question Answering System**
-
 This solution implements a **Modular Planner-Executor** architecture for multi-turn financial question answering on the ConvFinQA dataset. The system decouples semantic understanding (LLM-based planning) from mathematical execution (deterministic Python), achieving:
 
 - **Zero Arithmetic Errors**: All calculations performed by symbolic Python engine
@@ -16,7 +14,7 @@ The architecture features:
 - **Result Verifier**: Post-execution semantic validation
 - **Specialized Tools**: Fuzzy table extraction + LLM-guided text extraction
 
-**📄 For detailed implementation, architecture rationale, evaluation results, and future work, please see [REPORT.md](REPORT.md).**
+**For detailed implementation, architecture rationale, evaluation results, and future work, please see [REPORT.md](REPORT.md).**
 
 ---
 
