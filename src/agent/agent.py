@@ -10,8 +10,10 @@ from src.models.dataset import Document, ConvFinQARecord
 from src.agent.workflow_planner import WorkflowPlanner
 from src.agent.workflow_executor import WorkflowExecutor
 from src.agent.workflow_validator import WorkflowValidator
+from src.agent.result_verifier import ResultVerifier
 from src.services.llm_client import get_llm_client
 from src.evaluation.tracker import MetricsTracker
+from src.config import Config
 from src.logger import get_logger
 
 logger = get_logger(__name__)
@@ -235,22 +237,30 @@ class FinancialAgent:
     - Track metrics automatically
     """
     
-    def __init__(self, model_name: Optional[str] = None, enable_validation: bool = False):
+    def __init__(
+        self, 
+        model_name: Optional[str] = None, 
+        enable_validation: bool = False,
+        enable_judge: bool = False
+    ):
         """
         Initialize the agent
         
         Args:
             model_name: Model to use (e.g., 'gpt-4o', 'gpt-4o-mini')
             enable_validation: Whether to enable plan validation
+            enable_judge: Whether to enable post-execution judge audit
         """
         self.model_name = model_name
         self.enable_validation = enable_validation
+        self.enable_judge = enable_judge and Config.ENABLE_EXECUTION_JUDGE
         
         # Initialize components (lazy initialization)
         self._llm_client = None
         self._planner = None
         self._executor = None
         self._validator = None
+        self._judge = None
         self._tracker = None
     
     @property
@@ -263,10 +273,28 @@ class FinancialAgent:
         if self._llm_client is None:
             self._llm_client = get_llm_client()
             self._tracker = MetricsTracker()
-            self._planner = WorkflowPlanner(self._llm_client, tracker=self._tracker)
-            self._executor = WorkflowExecutor(tracker=self._tracker)
+            
+            # Initialize validator first if validation is enabled
             if self.enable_validation:
                 self._validator = WorkflowValidator()
+            else:
+                self._validator = None
+            
+            # Initialize judge if enabled
+            if self.enable_judge:
+                self._judge = ResultVerifier(self._llm_client)
+                logger.info("Execution judge enabled (post-execution audit)")
+            else:
+                self._judge = None
+            
+            # Pass validator to planner
+            self._planner = WorkflowPlanner(
+                self._llm_client, 
+                tracker=self._tracker,
+                validator=self._validator,
+                enable_validation=self.enable_validation
+            )
+            self._executor = WorkflowExecutor(tracker=self._tracker)
     
     async def run_turn(
         self,
@@ -277,7 +305,14 @@ class FinancialAgent:
         turn_idx: int = 0
     ) -> TurnResult:
         """
-        Run a single dialogue turn
+        Run a single dialogue turn with optional judge-based refinement.
+        
+        Flow:
+        1. Generate plan (with optional validation)
+        2. Execute plan
+        3. If judge enabled: Audit execution for grounding errors
+        4. If audit fails: Retry with judge critiques (max retries)
+        5. Return final result
         
         Args:
             question: User's question
@@ -297,36 +332,85 @@ class FinancialAgent:
             # Start turn tracking
             self._tracker.start_turn(turn_idx, question, expected_answer or "", ground_truth_program=None)
             
-            # Generate plan
-            plan = await self._planner.create_plan(
-                question=question,
-                document=document,
-                previous_answers=previous_answers
-            )
+            # Retry loop for judge-based refinement
+            max_retries = Config.MAX_JUDGE_REFINEMENT_RETRIES if self.enable_judge else 1
+            judge_critiques = None
             
-            # Validate plan if enabled
-            if self._validator:
-                validation = self._validator.validate(plan)
-                if not validation.is_valid:
-                    logger.warning(f"Plan validation issues: {validation.issues[:3]}")
-            
-            # Log plan for tracking
-            self._tracker.log_plan(
-                num_steps=len(plan.steps),
-                complexity=0.0,
-                plan_type="workflow",
-                plan_object=plan
-            )
-            
-            # Execute plan
-            result = await self._executor.execute(
-                plan=plan,
-                document=document,
-                previous_answers=previous_answers,
-                current_question=question
-            )
-            
-            answer_value = result.final_value if result.success else None
+            for attempt in range(max_retries):
+                # Generate plan with validation and refinement if enabled
+                if self.enable_validation:
+                    plan = await self._planner.create_plan_with_validation(
+                        question=question,
+                        document=document,
+                        previous_answers=previous_answers,
+                        error_feedback=self._planner._format_validation_feedback(judge_critiques) if judge_critiques else None
+                    )
+                else:
+                    plan = await self._planner.create_plan(
+                        question=question,
+                        document=document,
+                        previous_answers=previous_answers,
+                        error_feedback=self._planner._format_validation_feedback(judge_critiques) if judge_critiques else None
+                    )
+                
+                # Log plan for tracking
+                self._tracker.log_plan(
+                    num_steps=len(plan.steps),
+                    complexity=0.0,
+                    plan_type="workflow",
+                    plan_object=plan
+                )
+                
+                # Execute plan
+                result = await self._executor.execute(
+                    plan=plan,
+                    document=document,
+                    previous_answers=previous_answers,
+                    current_question=question
+                )
+                
+                answer_value = result.final_value if result.success else None
+                
+                # Judge audit if enabled and execution succeeded
+                if self.enable_judge and result.success and answer_value is not None:
+                    logger.info(f"Judge auditing execution (attempt {attempt + 1}/{max_retries})")
+                    
+                    audit = await self._judge.evaluate(
+                        question=question,
+                        plan=plan,
+                        execution_trace=self._executor.memory,
+                        document=document,
+                        previous_answers=previous_answers
+                    )
+                    
+                    # Use judge's should_retry method to check if retry is needed
+                    if not self._judge.should_retry(audit, Config.JUDGE_CONFIDENCE_THRESHOLD):
+                        if audit.is_valid:
+                            logger.info("✓ Judge audit passed: Execution is semantically grounded")
+                        else:
+                            logger.info(
+                                f"Judge found issues but confidence below threshold "
+                                f"({audit.confidence_score}% < {Config.JUDGE_CONFIDENCE_THRESHOLD}%), accepting result"
+                            )
+                        break  # Accept result
+                    
+                    # Judge says retry with high confidence - retry if attempts remain
+                    if attempt < max_retries - 1:
+                        judge_critiques = self._judge.convert_to_critiques(audit)
+                        logger.warning(
+                            f"Judge audit failed with high confidence ({audit.confidence_score}%), "
+                            f"retrying with critiques (attempt {attempt + 2}/{max_retries})"
+                        )
+                        continue  # Retry with judge feedback
+                    else:
+                        logger.warning(
+                            f"Judge audit failed but max retries reached ({max_retries}), "
+                            "returning final result anyway"
+                        )
+                        break
+                else:
+                    # No judge or execution failed - exit retry loop
+                    break
             
             # Finalize turn to calculate accuracies
             self._tracker.finalize_turn(answer_value)

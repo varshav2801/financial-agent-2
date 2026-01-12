@@ -18,6 +18,15 @@ class Config:
     
     # SSL Configuration (for corporate proxies)
     OPENAI_VERIFY_SSL: bool = os.getenv("OPENAI_VERIFY_SSL", "true").lower() != "false"
+    
+    # Workflow Validation Configuration
+    ENABLE_PLAN_VALIDATION: bool = os.getenv("ENABLE_PLAN_VALIDATION", "true").lower() == "true"
+    MAX_PLAN_REFINEMENT_RETRIES: int = int(os.getenv("MAX_PLAN_REFINEMENT_RETRIES", "3"))
+    
+    # Workflow Judge Configuration
+    ENABLE_EXECUTION_JUDGE: bool = os.getenv("ENABLE_EXECUTION_JUDGE", "true").lower() == "false"
+    MAX_JUDGE_REFINEMENT_RETRIES: int = int(os.getenv("MAX_JUDGE_REFINEMENT_RETRIES", "3"))
+    JUDGE_CONFIDENCE_THRESHOLD: int = int(os.getenv("JUDGE_CONFIDENCE_THRESHOLD", "80"))
 
     @classmethod
     def validate(cls) -> None:

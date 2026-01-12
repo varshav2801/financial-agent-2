@@ -1,7 +1,7 @@
-# Financial Agent: Neuro-Symbolic System for Multi-Turn Financial Reasoning
+# FinQA Assistant
 
 **ConvFinQA Challenge Solution**  
-*A Modular Planner-Executor Architecture for Zero-Hallucination Financial Analysis*
+*An AI-powered system leveraging a specialized Planner-Executor framework for multi-turn financial question answering.*
 
 ---
 
@@ -44,7 +44,7 @@ We implement a **Modular Planner-Executor** system inspired by the Model-Grounde
 
 ### 2.1 Problem Analysis & Architecture Selection
 
-#### Why This Architecture for This Problem
+#### Why This Architecture for This Problem?
 
 The **Planner-Executor** pattern was selected **specifically for the ConvFinQA dataset characteristics** and the problem's priorities:
 
@@ -71,21 +71,44 @@ The **Planner-Executor** pattern was selected **specifically for the ConvFinQA d
 
 #### Why Standard Approaches Fail on ConvFinQA
 
-**Agentic Loop Failures**:
-- **Token Explosion**: Recursive validation cycles waste 3-5× tokens on arithmetic that could be deterministic
-- **Hallucination Persistence**: LLMs hallucinate consistently; repeated attempts don't fix root causes
-- **Opacity**: Debugging requires tracing through multiple LLM calls with non-deterministic outputs
+**1. Agentic Loop Failures**
+
+While agentic "self-critique" is useful for creative tasks, it introduces significant risks in finance:
+
+- **Token Explosion**: Recursive validation cycles often waste 3–5× tokens on simple arithmetic that should be deterministic.
+- **Hallucination Persistence**: If the model misreads a table value initially, repeated "self-checks" often result in the model simply confirming its own error rather than fixing the root cause.
+- **Auditability Gap**: Tracing errors through multiple non-deterministic LLM calls is a "black box" nightmare, failing the strict audit requirements of the financial industry.
+
+**2. Risks of Tool-Calling and Calculators**
+
+Calculators provide mathematical accuracy but do not solve the "System 1" perception errors:
+
+- **Garbage In, Garbage Out**: A calculator is only as accurate as its inputs; if the LLM extracts $1,245 as $1,254, the calculator returns a "perfectly correct" wrong answer.
+- **Parameter Hallucination**: Models frequently swap operands in sensitive calculations, such as reversing the order in a subtraction or percentage change.
+- **State Failure**: Standard tools often fail to resolve pronouns like "that amount," losing the context of previously calculated figures across conversational turns.
+
+**3. Disadvantages of Program-Aided Language Models (PAL)**
+
+Generating custom Python scripts for simple arithmetic creates unnecessary vulnerabilities:
+
+- **Silent Failures**: A single indexing error (e.g., df.iloc[1,2] vs 1,3) returns a plausible but incorrect value without any internal validation to catch the drift.
+- **Over-Engineering**: Creating full code blocks for basic addition or subtraction increases the "hallucination surface area" by forcing the model to manage syntax instead of logic.
+- **Opaque Logic**: For auditors, verifying a generated code block is significantly harder than reviewing a structured, machine-readable JSON trace.
+
+**The Selected Strategy: Modular Planner-Executor**
+
+By using the LLM solely as a Symbolic Router, we decouple Extraction from Calculation. This ensures state is maintained in a deterministic registry, math is 100% accurate, and every step is fully traceable for an auditor.
 
 #### Architecture Decision Matrix
 
-| Feature | Multi-Stage Agentic | Code Generation (PAL) | **Modular Planner-Executor** (Selected) |
-|---------|---------------------|----------------------|-------------------------------|
-| **Accuracy** | High | Moderate (prone to index errors) | **Highest** (symbolic barrier) |
-| **Auditability** | High | Low (opaque code) | **Highest** (JSON trace) |
-| **Token Cost** | Very High (recursive loops) | Low (single-shot) | **Optimal** (structured prompts) |
-| **Tool Calls/Turn** | 5-15 (iterative loops) | 1-2 (code gen + exec) | **2 (planner + executor)** |
-| **Robustness** | Moderate | Low (silent failures) | **High** (predefined schema) |
-| **Maintainability** | Low (prompt drift) | Moderate | **High** (typed interfaces) |
+| Metric | Agentic Loop (Multi-Stage) | PAL (Python Code Gen) | Neuro-Symbolic (Modular Planner) |
+|--------|---------------------|----------------------|-------------------------------|
+| **Accuracy** | High (via self-correction) | Moderate (prone to hallucination) | High (symbolic barrier) |
+| **Auditability** | Moderate (opaque traces) | Low (hard-to-verify code) | High (linear JSON trace) |
+| **Token Cost** | High (recursive loops) | Low (single-shot) | Moderate (structured prompts) |
+| **Tool Calls/Turn** | 5–15 (iterative loops) | 1–2 (code gen + validator) | 2–3 (planner + validator) |
+| **Robustness** | Moderate (stochastic) | Low (silent failures) | High (enforced schema) |
+| **Maintainability** | Low (prompt sensitivity) | Moderate  | High (typed interfaces) |
 
 ### 2.2 The Planner-Executor Approach
 
@@ -97,17 +120,149 @@ This architecture was inspired by the Model-Grounded Symbolic Framework (NeSy 20
 
 ### 3.1 System Architecture
 
-![Workflow Diagram](./figures/workflow-diagram.png)
+![Workflow Diagram](./figures/workflow-diagram-final.png)
 
 *Figure: High-level architecture of the Financial Agent system. The workflow planner (LLM + validation) generates a plan, which is executed deterministically by the workflow executor using symbolic tools and memory. 
 
-### 3.2 Key components
+### 3.2 Repository Structure
 
-#### 1. The Workflow Planner
+The project follows a modular, production-ready architecture organized into clear functional domains:
 
-The WorkflowPlanner acts as a bridge between human intent and machine logic, automatically converting natural language descriptions into structured, executable programs.
+```
+version3/
+├── src/                          # Main application package
+│   ├── agent/                    # Core workflow orchestration
+│   │   ├── agent.py             # Main FinancialAgent orchestrator
+│   │   ├── workflow_planner.py  # LLM-based plan generation
+│   │   ├── workflow_executor.py # Deterministic execution engine
+│   │   ├── workflow_validator.py # Logical plan validation
+│   │   └── result_verifier.py   # Post-execution semantic audit
+│   │
+│   ├── prompts/                  # Centralized prompt engineering
+│   │   ├── workflow_planner.py  # Planner system prompt with pattern rules
+│   │   ├── text_tool.py         # Text extraction prompt
+│   │   └── result_verifier.py   # Result verification prompt
+│   │
+│   ├── tools/                    # Data extraction tools
+│   │   ├── workflow_table_tool.py  # Fuzzy table extraction
+│   │   └── text_tool.py            # LLM-guided text extraction
+│   │
+│   ├── models/                   # Type-safe data schemas
+│   │   ├── workflow_schema.py   # WorkflowPlan, WorkflowStep models
+│   │   ├── tool_schemas.py      # Tool parameter schemas
+│   │   ├── dataset.py           # ConvFinQA dataset models
+│   │   └── exceptions.py        # Custom exception hierarchy
+│   │
+│   ├── services/                 # External service integrations
+│   │   └── llm_client.py        # OpenAI API wrapper with retry logic
+│   │
+│   ├── utils/                    # Helper utilities
+│   │   ├── data_loader.py       # Dataset loading functions
+│   │   ├── table_normalizer.py  # Table orientation detection
+│   │   └── year_context.py      # Temporal context inference
+│   │
+│   ├── evaluation/               # Batch testing and metrics
+│   │   ├── runner.py            # Evaluation orchestration
+│   │   ├── tracker.py           # Metrics tracking
+│   │   └── writer.py            # Results serialization
+│   │
+│   ├── config.py                 # Configuration management
+│   ├── logger.py                 # Structured logging setup
+│   └── main.py                   # CLI entry point (Typer)
+│
+├── tests/                        # Unit and integration tests
+│   ├── test_executor.py         # Executor logic tests
+│   ├── test_validator.py        # Validation rule tests
+│   ├── test_table_tool.py       # Table extraction tests
+│   └── test_integration.py      # End-to-end workflow tests
+│
+├── data/                         # Dataset storage
+│   └── convfinqa_dataset.json   # Full ConvFinQA dataset
+│
+├── evaluation_results/           # Batch test outputs
+├── pyproject.toml                # Project dependencies (uv)
+├── README.md                     # Setup and usage guide
+└── REPORT.md                     # Technical documentation
+```
 
-##### Features
+**Design Rationale:**
+- **Separation of Concerns**: Each directory represents a distinct responsibility (orchestration, data access, validation)
+- **Testability**: Business logic isolated from infrastructure, enabling comprehensive unit testing
+- **Extensibility**: New tools or validators can be added without modifying core components
+- **Type Safety**: All cross-module communication uses typed Pydantic models
+- **Prompt Versioning**: Centralized prompts enable A/B testing and iterative refinement
+
+### 3.3 Technical Stack & Frameworks
+
+The system leverages modern Python libraries optimized for reliability, type safety, and developer experience:
+
+#### Core Frameworks
+
+**Pydantic (v2.x)**  
+- **Purpose**: Runtime data validation and serialization  
+- **Usage**: All workflow schemas (`WorkflowPlan`, `WorkflowStep`), tool parameters, and LLM responses are validated using Pydantic models
+
+**OpenAI Python SDK (v1.x)**  
+- **Purpose**: LLM inference via GPT-4 family models  
+- **Features Used**:
+  - `beta.chat.completions.parse()`: Structured output parsing with Pydantic response models
+  - Streaming support for real-time plan generation visibility
+  - Token usage tracking for cost optimization
+  - Automatic retry logic with exponential backoff (configured at client initialization)
+
+
+#### Supporting Libraries
+
+**RapidFuzz**  
+- **Purpose**: High-performance fuzzy string matching  
+- **Usage**: Table row/column matching with Levenshtein-based similarity scoring
+- **Configuration**: WRatio scorer with 85% confidence threshold to balance flexibility and precision
+
+**Rich & Typer**  
+- **Purpose**: CLI interface and terminal output formatting  
+- **Usage**:
+  - `Typer`: Type-safe CLI with automatic help generation
+  - `Rich`: Colored console output, progress bars, and structured logging visualization
+  - Enables user-friendly debugging of plan execution traces
+
+**Pytest**  
+- **Purpose**: Unit and integration testing framework  
+- **Coverage**: 85%+ test coverage across core components
+- **Features**: Fixtures for consistent test data, parametrized tests for edge cases
+
+#### Notable Exclusions
+
+**Why No LangGraph/LangChain?**  
+While LangGraph excels at complex multi-agent workflows with cycles and state persistence, ConvFinQA's deterministic execution model doesn't require its features:
+
+**What LangGraph Provides:**
+- **Persistent State Across Sessions**: Checkpointing to resume conversations after crashes
+- **Dynamic Tool Routing**: Runtime selection of tools based on LLM decisions
+- **Cyclic Workflows**: Loops and conditional branching (e.g., retry until valid)
+- **Multi-Agent Coordination**: State sharing between multiple autonomous agents
+
+**Why We Don't Need It:**
+- **State Persistence**: Our state is conversation-scoped (single session). Multi-turn memory is managed in-process via Python dictionaries (`previous_answers`). No need for external databases or checkpointing since conversations are ephemeral.
+- **Fixed Pipeline**: We use a deterministic planner → validator → executor flow. No dynamic routing needed.
+- **Linear Execution**: Our state machine has no cycles—validation loops are handled explicitly in code, not via graph traversal.
+- **Single Agent**: One planner orchestrates all tools. No agent collaboration or parallel execution required.
+
+**Trade-off Analysis:**
+- ✅ **Simpler Architecture**: Native Python is easier to debug than graph-based abstractions
+- ✅ **Full Control**: Direct access to execution flow without framework constraints
+- ✅ **Fewer Dependencies**: Reduced attack surface and faster installation
+- ❌ **Manual State Management**: We implement memory tracking ourselves (acceptable for our use case)
+- ❌ **No Built-in Persistence**: Cannot resume conversations across process restarts (not a requirement for ConvFinQA)
+
+The decision to use **native Python orchestration** reduces dependencies, improves debuggability, and maintains full control over execution flow—critical for a financial system where auditability trumps framework convenience.
+
+### 3.4 Key Components
+
+#### 1. The Workflow Planner 
+
+The Workflow Planner acts as a bridge between human intent and machine logic, automatically converting natural language descriptions into structured, executable programs.
+
+#### Features
 
 **1. Decomposition**  
 Every user query is broken into atomic steps. For example:
@@ -136,10 +291,6 @@ Every extracted value includes metadata:
 ```
 **4. Literal Constants**  
 Known constants (12 months, 100 for percentages) use `literal` operands instead of table extraction, reducing extraction failures.
-
-#### Prompting Strategy: The "Symbolic Router"
-
-The system prompt (`WORKFLOW_PLANNER_SYSTEM_PROMPT`) explicitly strips the LLM of its "calculator" role and forces it into a **Router/Binding** role:
 
 #### Output Schema: The Execution Contract
 
@@ -190,9 +341,33 @@ The Planner outputs a **strictly typed** `WorkflowPlan` validated by Pydantic:
 - **Field Validation**: Ensures required fields are present (e.g., `source` for `extract_value`)
 - **Type Safety**: Catches mismatches at generation time, not execution time
 
-#### 2. The Workflow Executor
+#### 2. The Workflow Validator
 
-The **WorkflowExecutor** implements a deterministic state machine that executes plans without further LLM intervention.
+The **Workflow Validator** functions as the system's Logical Evaluator. While Pydantic ensures every plan adheres to a valid JSON schema, the Logical Evaluator goes further—performing deep structural and dependency analysis to guarantee the plan is a logically executable program.
+
+**Structural and Relational Enforcement**
+
+The Validator is designed to catch hallucination errors where the JSON syntax is correct but the underlying logic is flawed. It performs three critical checks:
+
+- **Referential Integrity Check**: Ensures every `step_ref` points to an existing `step_id`. Specifically blocks forward references (e.g., Step 2 attempting to use a value from Step 5).
+- **Sequential ID Validation**: Enforces that all `step_id` values are strictly sequential integers starting from 1, grounding the LLM's reasoning into a predictable execution order.
+- **Operation Axiom Check**: Verifies that computation tools have the correct number of operands (e.g., ensuring `percentage_change` has exactly two inputs).
+
+**The Symbolic Intervention Loop**
+
+When a plan fails validation, the system does not simply error out. Instead, the Validator generates a **Structured Critique** for refinement:
+
+| Critique Component | Description |
+|--------------------|-------------|
+| **Issue Type**     | High-level category (e.g., ForwardReference, InvalidOperandCount) |
+| **Error Location** | The specific `step_id` where the logical break occurred |
+| **Reason & Fix**   | Natural language explanation and instruction (e.g., "Step 3 references Step 5; reorder steps or change reference") |
+
+This critique is injected dynamically into the next Planner prompt, allowing the model to repair its logic in the second iteration.
+
+#### 3. The Workflow Executor
+
+The **Workflow Executor** implements a deterministic state machine that executes plans without further LLM intervention.
 
 The executor maintains a central **memory dictionary** mapping `step_id → float`:
 
@@ -274,8 +449,24 @@ The WorkflowTextTool bridges the gap between unstructured financial prose and st
 - **Hybrid Reliability:** Combines LLM semantic understanding with deterministic Python verification, ensuring that values used in downstream math are grounded in the actual text.
 - **Normalized Outputs:** Automatically converts narrative strings (e.g., "$155.8 million") into clean floats (155.8) ready for symbolic execution.
 
+#### 5. Result Verifier (LLM as a Judge)
 
-### 3.4 Code Structure
+The **Result Verifier** acts as the final Semantic Evaluator. Operating post-execution, it verifies that the final answer is grounded in the actual context of the financial document, catching errors that deterministic code cannot detect.
+
+**Semantic Falsification Strategy**
+
+The Judge is prompted not to check the math (which is handled by the Workflow Executor), but to falsify the grounding of the extraction. It focuses on four primary "Silent Failure" types:
+
+- **Temporal Mismatch**: Flags if the Planner targeted 2022 data for a question specifically asking about 2023.
+- **Entity Drift**: Identifies if the plan pulled "Gross Margin" when the user requested "Operating Margin".
+- **Unit/Scale Verification**: Detects if the extracted float contradicts the document's scale (e.g., extracting "155" when the text specifies "billions").
+- **Respectively List Alignment**: Verifies that values pulled from a prose list match their intended labels.
+
+### 3.5 Testing & Quality Assurance
+
+The system includes a comprehensive test suite covering both unit and integration tests to ensure correctness, reliability, and maintainability. The test suite is organized into six categories: (1) **Model validation tests** verify Pydantic schema enforcement and field requirements for all workflow components, (2) **Validator tests** ensure the WorkflowValidator correctly identifies logical errors like forward references, invalid operand counts, and non-sequential step IDs, (3) **Table normalization tests** validate year detection, orientation detection, and metric-to-year transposition, (4) **Table tool tests** cover fuzzy matching algorithms, similarity thresholds, and extraction error handling, (5) **Executor integration tests** verify all arithmetic operations, memory persistence, and conversation history handling, and (6) **End-to-end integration tests** validate complete agent workflows including validation loops, judge auditing, and multi-turn conversations. The test suite achieves over 85% code coverage across core components and uses pytest fixtures for consistent test data, enabling rapid regression testing and confident refactoring during development.
+
+### 3.6 Development Workflow
 
 ## 4. Evaluation
 
@@ -556,7 +747,7 @@ The ConvFinQA challenge required not just high accuracy, but also the ability to
 
 ### Tools Used
 
-This solution was developed with assistance from **GitHub Copilot** and **Claude (via Cursor IDE)** for the following purposes:
+This solution was developed with assistance from **Claude (via Cursor IDE)** for the following purposes:
 
 1. **Code Generation**:
    - Boilerplate code for Pydantic models
@@ -565,38 +756,30 @@ This solution was developed with assistance from **GitHub Copilot** and **Claude
    - Test case scaffolding
 
 2. **Refactoring**:
-   - Converting legacy Planner to WorkflowPlanner
    - Extracting common patterns into utility functions
    - Improving error handling patterns
 
 3. **Documentation**:
    - Inline code comments
    - README structure
-   - This report (outline and structure)
 
 ### What Was NOT AI-Generated
 
 1. **Core Architecture**: The Planner-Executor pattern and register memory design were manually designed based on Neuro-Symbolic AI research.
 
-2. **9 Critical Pattern Rules**: These were manually distilled from systematic failure analysis on the ConvFinQA dataset.
+2. **Critical Pattern Rules**: These were manually distilled from systematic failure analysis on the ConvFinQA dataset.
 
-3. **Prompt Engineering**: The 530-line `WORKFLOW_PLANNER_SYSTEM_PROMPT` was iteratively refined through manual testing, not AI-generated.
+3. **Prompt Engineering**: The `WORKFLOW_PLANNER_SYSTEM_PROMPT` was iteratively refined through manual testing, not AI-generated.
 
 4. **Error Analysis**: All failure categorization and mitigation strategies are based on manual debugging sessions.
 
-5. **Design Decisions**: The architecture decision matrix and rationale for rejecting RAG/agentic approaches were manually reasoned.
+5. **Design Decisions**: The architecture decision matrix and approach rationale were manually reasoned.
 
 ### Disclosure Rationale
 
-AI assistants accelerated implementation velocity by ~30% (estimated), particularly for:
-- Boilerplate reduction (Pydantic models, error classes)
-- Refactoring safety (type-checked transformations)
-- Documentation consistency
-
-However, all **critical design decisions**, **algorithmic logic**, and **problem-solving strategies** were human-driven. The AI tools functioned as productivity enhancers, not solution designers.
-
+AI was used for productivity enhancements, and boilerplate code generation. All **critical design decisions**, **algorithmic logic**, and **problem-solving strategies** were human-driven.
 ---
 
 **Document Version**: 1.0  
 **Last Updated**: January 12, 2026  
-**Author**: Solution for AI Consulting Company Technical Assessment
+**Author**: Varsha Venkatesh
