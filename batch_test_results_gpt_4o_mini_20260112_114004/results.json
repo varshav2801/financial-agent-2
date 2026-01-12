@@ -1,0 +1,514 @@
+[
+  {
+    "example_id": "Single_RE/2010/page_138.pdf-1",
+    "model": "gpt-4o-mini",
+    "features": {
+      "num_dialogue_turns": 4,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": true
+    },
+    "num_turns": 4,
+    "turns": [
+      {
+        "success": true,
+        "answer": 1563.0,
+        "expected": "1563",
+        "question": "what was the net expense in interest and penalties in the year of 2009?",
+        "turn": 1,
+        "execution_time_ms": 21785.19105911255,
+        "plan": {
+          "thought_process": "The requested value (net expense in interest and penalties for 2009) is described in the document prose (post-text) rather than in the provided table rows. I'll extract the numeric amount from the post-text using a text extraction with keywords focusing on accrued interest, penalties, net expense and the year 2009. I will request the value in thousands (document uses $ amounts in thousands) and specify the value context so the extractor pulls the net expense (benefit) in interest and penalties for the year ended 2009.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "accrued",
+                  "interest",
+                  "penalties",
+                  "net expense",
+                  "2009"
+                ],
+                "year": "2009",
+                "unit": "thousand",
+                "value_context": "net expense (benefit) in interest and penalties recognized in income taxes for the year ended 2009"
+              },
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "1": 1563.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 11344,
+          "completion_tokens": 1333,
+          "total_tokens": 12677
+        }
+      },
+      {
+        "success": true,
+        "answer": 34366.0,
+        "expected": "2446",
+        "question": "and what was that of 2008?",
+        "turn": 2,
+        "execution_time_ms": 78974.45011138916,
+        "plan": {
+          "thought_process": "The user asks \"and what was that of 2008?\" \u2014 the pronoun \"that\" refers to the same metric previously extracted (prev_0). prev_0 has operation=extraction (a base table value), so for a different year we must re-extract the same row from the table rather than reuse prev_0. From the available table metrics, the most likely matching metric is \"balance at december 31\" (matches the common conversational pattern of asking an end-of-year balance). Plan: perform a single table extraction for the row \"balance at december 31\" and the column/year \"2008\". Use unit normalization consistent with the document (values discussed in thousands), so set unit_normalization to \"thousand\".",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "balance at december 31",
+                "col_query": "2008",
+                "unit_normalization": "thousand"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 1563.0,
+          "1": 34366.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 9740,
+          "completion_tokens": 1202,
+          "total_tokens": 10942
+        }
+      },
+      {
+        "success": true,
+        "answer": -883.0,
+        "expected": "-883",
+        "question": "what is, then, the difference between the net expense in 2008 and 2009?",
+        "turn": 3,
+        "execution_time_ms": 49657.56797790527,
+        "plan": {
+          "thought_process": "The requested metric 'net expense' is not one of the listed table row names, and the document text (post-text) states the company \"accrued and recognized a net expense (benefit)\" for the years 2010, 2009 and 2008. Therefore extract the net expense amounts for 2009 and 2008 from the post-text using text extraction (searching for phrases like 'net expense' / 'accrued and recognized' and the specific year). After extracting the two year values (in thousands, per the surrounding disclosures), compute the difference as (2009 value minus 2008 value) so the result shows the change from 2008 to 2009.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "net expense",
+                  "accrued and recognized",
+                  "2009"
+                ],
+                "year": "2009",
+                "unit": "thousand",
+                "value_context": "net expense (benefit) accrued and recognized for the year ended December 31, 2009"
+              },
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "net expense",
+                  "accrued and recognized",
+                  "2008"
+                ],
+                "year": "2008",
+                "unit": "thousand",
+                "value_context": "net expense (benefit) accrued and recognized for the year ended December 31, 2008"
+              },
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 1563.0,
+          "-2": 34366.0,
+          "1": 1563.0,
+          "2": 2446.0,
+          "3": -883.0
+        },
+        "error": null,
+        "numerical_match": true,
+        "financial_match": true,
+        "soft_match": true,
+        "tokens": {
+          "prompt_tokens": 12989,
+          "completion_tokens": 2232,
+          "total_tokens": 15221
+        }
+      },
+      {
+        "success": true,
+        "answer": 63.90024529844644,
+        "expected": "-36%",
+        "question": "how much does that difference represent percentually in comparison to the net expense in 2008?",
+        "turn": 4,
+        "execution_time_ms": 35783.13970565796,
+        "plan": {
+          "thought_process": "The phrase \"that difference\" refers to the most recent previous answer prev_2 (operation=subtract), so use prev_2 as the numerator. The denominator \"net expense in 2008\" is not one of the table row names, so extract it from the document text (post-text) for year 2008. Finally compute what percent the difference represents of the 2008 net expense using the percentage operation (part = difference, whole = net expense 2008). Use negative step_ref -1 to reference prev_2 (most recent previous answer).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "net expense",
+                  "recognized",
+                  "2008"
+                ],
+                "year": "2008",
+                "unit": "thousand",
+                "value_context": "net expense (benefit) accrued and recognized in 2008"
+              },
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "percentage",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 1563.0,
+          "-2": 34366.0,
+          "-3": -883.0,
+          "1": 2446.0,
+          "2": 63.90024529844644
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 11378,
+          "completion_tokens": 2047,
+          "total_tokens": 13425
+        }
+      }
+    ],
+    "numerical_accuracy": 0.5,
+    "financial_accuracy": 0.5,
+    "soft_match_accuracy": 0.5,
+    "all_correct": false,
+    "correct_turns": 2,
+    "total_turns": 4,
+    "total_tokens": 52265,
+    "total_response_time_ms": 186200.34885406494,
+    "avg_tokens_per_turn": 13066.25,
+    "avg_response_time_ms": 46550.087213516235
+  },
+  {
+    "example_id": "Single_MSI/2008/page_73.pdf-2",
+    "model": "gpt-4o-mini",
+    "features": {
+      "num_dialogue_turns": 4,
+      "has_type2_question": false,
+      "has_duplicate_columns": false,
+      "has_non_numeric_values": false
+    },
+    "num_turns": 4,
+    "turns": [
+      {
+        "success": true,
+        "answer": 0.0,
+        "expected": "2.6",
+        "question": "what was the amount of the reduction in the segment 2019s backlog in 2007?",
+        "turn": 1,
+        "execution_time_ms": 32931.62298202515,
+        "plan": {
+          "thought_process": "The table does not contain a 'backlog' metric (available rows are 'segment net sales' and 'operating earnings'), so the backlog reduction must be extracted from the document text. I'll perform a text extraction searching the post_text (and pre_text is searched automatically) for language about the segment's backlog in 2007. Specify keywords to focus the extractor, set year=2007 and unit=million, and request the numeric amount described as the reduction in the segment's backlog in 2007.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "text",
+              "table_params": null,
+              "text_params": {
+                "context_window": "post_text",
+                "search_keywords": [
+                  "backlog",
+                  "segment",
+                  "reduction",
+                  "2007"
+                ],
+                "year": "2007",
+                "unit": "million",
+                "value_context": "amount of the reduction in the segment's backlog in 2007"
+              },
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "1": 0.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 11320,
+          "completion_tokens": 1904,
+          "total_tokens": 13224
+        }
+      },
+      {
+        "success": true,
+        "answer": 958.0,
+        "expected": "3.2",
+        "question": "what was the amount in 2006?",
+        "turn": 2,
+        "execution_time_ms": 133767.91095733643,
+        "plan": {
+          "thought_process": "The question asks for \"the amount in 2006.\" The document context immediately discusses operating earnings (mentions $787 million in 2006), and the table rows include 'operating earnings' and a column for 'years ended december 31 2006'. Therefore interpret the request as asking for operating earnings in 2006 and extract that value from the table. Do not use the previous answer (prev_0) because it is not a relevant computed result for this extraction. Extract from the table row 'operating earnings' and column 'years ended december 31 2006', normalizing units to million.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "operating earnings",
+                "col_query": "years ended december 31 2006",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 0.0,
+          "1": 958.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 9882,
+          "completion_tokens": 881,
+          "total_tokens": 10763
+        }
+      },
+      {
+        "success": true,
+        "answer": 255.0,
+        "expected": "-0.6",
+        "question": "what is the net difference?",
+        "turn": 3,
+        "execution_time_ms": 18915.724754333496,
+        "plan": {
+          "thought_process": "User asks \"what is the net difference?\" \u2014 the surrounding document text compares operating earnings in 2007 to 2006, so interpret the question as the net difference in operating earnings between 2007 and 2006. Extract operating earnings for 2007 and 2006 from the table (use the exact row name 'operating earnings' and the table year columns 'years ended december 31 2007' and 'years ended december 31 2006'), then compute the difference as (2007 value) - (2006 value). Do not rely on prior prev_* answers; extract the base table values and subtract to get the net difference. Unit normalization set to million to match the document context.",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "operating earnings",
+                "col_query": "years ended december 31 2007",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "operating earnings",
+                "col_query": "years ended december 31 2006",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 3,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "subtract",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 2,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 0.0,
+          "-2": 958.0,
+          "1": 1213.0,
+          "2": 958.0,
+          "3": 255.0
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": false,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 9897,
+          "completion_tokens": 1317,
+          "total_tokens": 11214
+        }
+      },
+      {
+        "success": true,
+        "answer": 0.2661795407098121,
+        "expected": "-18.8%",
+        "question": "what is the difference divided by the 2006 value?",
+        "turn": 4,
+        "execution_time_ms": 25187.27970123291,
+        "plan": {
+          "thought_process": "The user asks for \u201cthe difference divided by the 2006 value.\u201d A prior answer (prev_2) is the difference for operating earnings (operation: subtract). Use that previous-result as the numerator and extract the 2006 operating earnings from the table as the denominator, then divide. Per conversation-history referencing rules, prev_2 is referenced with a negative step_ref (prev_0 = -1, prev_1 = -2, prev_2 = -3). Extract the 2006 operating earnings from the table (row_query must match the exact metric name 'operating earnings' and the column name is 'years ended december 31 2006'), then compute divide(prev_2, extracted_2006_value).",
+          "steps": [
+            {
+              "step_id": 1,
+              "tool": "extract_value",
+              "source": "table",
+              "table_params": {
+                "table_id": "main",
+                "row_query": "operating earnings",
+                "col_query": "years ended december 31 2006",
+                "unit_normalization": "million"
+              },
+              "text_params": null,
+              "operation": null,
+              "operands": null
+            },
+            {
+              "step_id": 2,
+              "tool": "compute",
+              "source": null,
+              "table_params": null,
+              "text_params": null,
+              "operation": "divide",
+              "operands": [
+                {
+                  "type": "reference",
+                  "step_ref": -3,
+                  "value": null
+                },
+                {
+                  "type": "reference",
+                  "step_ref": 1,
+                  "value": null
+                }
+              ]
+            }
+          ]
+        },
+        "step_results": {
+          "-1": 0.0,
+          "-2": 958.0,
+          "-3": 255.0,
+          "1": 958.0,
+          "2": 0.2661795407098121
+        },
+        "error": null,
+        "numerical_match": false,
+        "financial_match": true,
+        "soft_match": false,
+        "tokens": {
+          "prompt_tokens": 9921,
+          "completion_tokens": 1603,
+          "total_tokens": 11524
+        }
+      }
+    ],
+    "numerical_accuracy": 0.0,
+    "financial_accuracy": 0.25,
+    "soft_match_accuracy": 0.0,
+    "all_correct": false,
+    "correct_turns": 1,
+    "total_turns": 4,
+    "total_tokens": 46725,
+    "total_response_time_ms": 210802.53839492798,
+    "avg_tokens_per_turn": 11681.25,
+    "avg_response_time_ms": 52700.634598731995
+  }
+]

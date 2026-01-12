@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-01-12T11:40:04.146145",
+  "dataset_path": "/Users/varsha.venkatesh/Downloads/financial-agent-main 4/version3/data/convfinqa_dataset.json",
+  "sample_size": 2,
+  "seed": 42,
+  "model": "gpt-4o-mini",
+  "sample_ids": [
+    "Single_RE/2010/page_138.pdf-1",
+    "Single_MSI/2008/page_73.pdf-2"
+  ]
+}

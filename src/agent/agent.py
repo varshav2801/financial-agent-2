@@ -440,18 +440,32 @@ class FinancialAgent:
             
             # Update previous answers (match main flow pattern)
             if turn_result.success and turn_result.answer is not None:
-                # Extract entity from plan for tracking
+                # Extract entity and operation from plan for tracking
+                # CRITICAL: Track LAST extraction entity (most recent context)
+                # and FINAL operation (what the turn computed)
                 entity = "unknown"
                 operation = "unknown"
                 if turn_result.plan:
-                    for step in turn_result.plan.get('steps', []):
+                    steps = turn_result.plan.get('steps', [])
+                    
+                    # Track the LAST extraction entity (most recent in plan)
+                    for step in steps:
                         if step.get('tool') == 'extract_value' and step.get('source') == 'table':
                             table_params = step.get('table_params', {})
-                            entity = table_params.get('row_query', 'unknown')
+                            extracted_entity = table_params.get('row_query', 'unknown')
+                            logger.debug(f"Turn {turn_idx}, Step {step.get('step_id')}: Found extraction entity='{extracted_entity}'")
+                            entity = extracted_entity
+                            # Don't break - keep going to find the last extraction
+                    
+                    # Track the FINAL operation (last step's operation)
+                    if steps:
+                        last_step = steps[-1]
+                        if last_step.get('tool') == 'compute':
+                            operation = last_step.get('operation', 'unknown')
+                        elif last_step.get('tool') == 'extract_value':
                             operation = 'extraction'
-                            break
-                        elif step.get('tool') == 'compute' and step.get('operation'):
-                            operation = step['operation']
+                    
+                    logger.info(f"Turn {turn_idx} final metadata: entity='{entity}', operation='{operation}'")
                 
                 previous_answers[f"prev_{turn_idx}"] = {
                     "value": turn_result.answer,

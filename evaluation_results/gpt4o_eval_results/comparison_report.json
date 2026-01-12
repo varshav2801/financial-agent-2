@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-01-11T22:02:01.604699",
+  "models": [
+    "gpt-4o"
+  ],
+  "model_results": [
+    {
+      "model": "gpt-4o",
+      "aggregate_metrics": {
+        "total_examples": 11,
+        "errors": 1,
+        "overall": {
+          "numerical_accuracy": 0.48506493506493503,
+          "financial_accuracy": 0.4980519480519481,
+          "soft_match_accuracy": 0.6398268398268399,
+          "perfect_conversations": 0,
+          "perfect_rate": 0.0,
+          "avg_tokens_per_example": 25601.636363636364,
+          "avg_tokens_per_turn": 6638.918831168831,
+          "avg_response_time_ms_per_example": 145438.42163952914,
+          "avg_response_time_ms_per_turn": 49897.09739169001
+        },
+        "by_turns": {
+          "numerical_accuracy": {
+            "1-2": 0.375,
+            "3-4": 0.6041666666666666,
+            "5+": 0.47301587301587306
+          },
+          "financial_accuracy": {
+            "1-2": 0.375,
+            "3-4": 0.6041666666666666,
+            "5+": 0.5206349206349207
+          },
+          "soft_match_accuracy": {
+            "1-2": 0.625,
+            "3-4": 0.6666666666666666,
+            "5+": 0.6238095238095238
+          },
+          "avg_tokens_per_turn": {
+            "1-2": 5870.875,
+            "3-4": 7001.9375,
+            "5+": 7178.952380952382
+          },
+          "avg_response_time_ms": {
+            "1-2": 67024.64845776558,
+            "3-4": 46067.59931643804,
+            "5+": 32166.36007059188
+          }
+        },
+        "by_type2_question": {
+          "numerical_accuracy": {
+            "true": 0.3571428571428571,
+            "false": 0.5916666666666667
+          },
+          "financial_accuracy": {
+            "true": 0.38571428571428573,
+            "false": 0.5916666666666667
+          },
+          "soft_match_accuracy": {
+            "true": 0.41428571428571426,
+            "false": 0.8277777777777778
+          }
+        },
+        "by_non_numeric_values": {
+          "numerical_accuracy": {
+            "true": 0.44333333333333336,
+            "false": 0.5198412698412699
+          },
+          "financial_accuracy": {
+            "true": 0.44333333333333336,
+            "false": 0.5436507936507936
+          },
+          "soft_match_accuracy": {
+            "true": 0.5433333333333333,
+            "false": 0.7202380952380952
+          }
+        }
+      }
+    }
+  ]
+}
