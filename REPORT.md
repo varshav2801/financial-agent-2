@@ -5,6 +5,41 @@
 
 ---
 
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+   - [The Problem: Multi-Hop Financial Reasoning at Scale](#the-problem-multi-hop-financial-reasoning-at-scale)
+   - [The Solution: A Neuro-Symbolic Architecture](#the-solution-a-neuro-symbolic-architecture)
+   - [Key Achievements](#key-achievements)
+2. [Methodology & Architectural Rationale](#2-methodology--architectural-rationale)
+   - [Problem Analysis & Architecture Selection](#21-problem-analysis--architecture-selection)
+   - [The Planner-Executor Approach](#22-the-planner-executor-approach)
+3. [Implementation Details](#3-implementation-details)
+   - [System Architecture](#31-system-architecture)
+   - [Repository Structure](#32-repository-structure)
+   - [Technical Stack & Frameworks](#33-technical-stack--frameworks)
+   - [Key Components](#34-key-components)
+   - [Testing & Quality Assurance](#35-testing--quality-assurance)
+4. [Evaluation](#4-evaluation)
+   - [Evaluation Strategy](#41-evaluation-strategy)
+   - [Key Metrics](#43-key-metrics)
+5. [Results & Discussion](#5-results--discussion)
+   - [Quantitative Results](#51-quantitative-results)
+   - [Qualitative Analysis](#52-qualitative-analysis)
+   - [Strengths](#53-strengths)
+   - [Limitations](#54-limitations)
+6. [Future Work](#6-future-work)
+   - [API & Deployment](#61-api--deployment)
+   - [Model Optimization & Testing](#62-model-optimization--testing)
+   - [Robust Testing & Validation](#63-robust-testing--validation)
+   - [Core Algorithm Improvements](#64-core-algorithm-improvements)
+   - [User Experience Enhancements](#65-user-experience-enhancements)
+   - [Multi-Agent Specialization](#66-multi-agent-specialization)
+7. [Conclusion](#7-conclusion)
+8. [Use of AI Coding Assistants](#8-use-of-ai-coding-assistants)
+
+---
+
 ## 1. Executive Summary
 
 ### The Problem: Multi-Hop Financial Reasoning at Scale
